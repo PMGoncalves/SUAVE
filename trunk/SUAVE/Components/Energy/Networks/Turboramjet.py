@@ -59,7 +59,7 @@ class Turboramjet(Propulsor):
         self.number_of_engines = 1.0
         self.nacelle_diameter  = 1.0
         self.engine_length     = 1.0
-        self.bypass_ratio      = 1.0
+        self.bypass_ratio      = 0.0
         
         #areas needed for drag; not in there yet
         self.areas             = Data()
@@ -142,9 +142,9 @@ class Turboramjet(Propulsor):
         inlet_nozzle(conditions)
         
         # Bypass system
-        Mo       = conditions.freestream.mach_number
-        i_tj = Mo < mach_separation
-        i_rj = Mo > mach_separation
+        Mo      = conditions.freestream.mach_number
+        i_tj    = Mo < mach_separation
+        i_rj    = Mo > mach_separation
     
             
         #----------------------
@@ -197,42 +197,50 @@ class Turboramjet(Propulsor):
         low_pressure_turbine.inputs.bypass_ratio               = 0.0
             
         #flow through the low pressure turbine
-        low_pressure_turbine(conditions)
-        print 'TURBOJET ', i_tj
-        print '-------------------------------------------'
-        print 'INLET '
-        print 'Pressure    :', inlet_nozzle.outputs.stagnation_pressure
-        print 'Temperature :', inlet_nozzle.outputs.stagnation_temperature
-        print '-------------------------------------------'    
+        low_pressure_turbine(conditions) 
         
-        mixed_temperature = 0.0*Mo/Mo
-        mixed_pressure    = 0.0*Mo/Mo
+        #----------------------
+        # SEPARATION OF OPERATIONS
+        #----------------------
+        
+        # Initalize arrays
+        mixed_temperature   = 0.0*Mo/Mo
+        mixed_pressure      = 0.0*Mo/Mo
+        mach_number         = 0.1*Mo/Mo
         
         # Combustor
         #-- Turbojet operation
         mixed_temperature[i_tj] = low_pressure_turbine.outputs.stagnation_temperature[i_tj] 
-        mixed_pressure[i_tj] = low_pressure_turbine.outputs.stagnation_pressure[i_tj] 
+        mixed_pressure[i_tj]    = low_pressure_turbine.outputs.stagnation_pressure[i_tj] 
+        
         
         #-- Ramjet operation
         mixed_temperature[i_rj] = inlet_nozzle.outputs.stagnation_temperature[i_rj]
-        mixed_pressure[i_rj] = inlet_nozzle.outputs.stagnation_pressure[i_rj]
+        mixed_pressure[i_rj]    = inlet_nozzle.outputs.stagnation_pressure[i_rj]
+        mach_number[i_rj]       = inlet_nozzle.outputs.mach_number[i_rj]
         
-        combustor_2.inputs.stagnation_temperature = mixed_temperature
-        combustor_2.inputs.stagnation_pressure = mixed_pressure
+        #-- link the combustor to the correct stagnation properties
+        combustor_2.inputs.stagnation_temperature   = mixed_temperature
+        combustor_2.inputs.stagnation_pressure      = mixed_pressure
+        #combustor_2.inputs.mach_number              = mach_number
         
+        # flow through combustor
         combustor_2(conditions)
         
-        final_f1  = combustor.outputs.fuel_to_air_ratio
-        final_f2  = combustor_2.outputs.fuel_to_air_ratio
-        final_f1[i_rj] = 0.0*Mo[i_rj]/Mo[i_rj]
-        final_f2[i_tj] = 0.0*Mo[i_tj]/Mo[i_tj]
+        # Fuel-to-air ratio adjustments
+        final_f1        = combustor.outputs.fuel_to_air_ratio
+        final_f2        = combustor_2.outputs.fuel_to_air_ratio
         
-        combustor.outputs.fuel_to_air_ratio = final_f1
-        combustor_2.outputs.fuel_to_air_ratio = final_f2
+        #-- If ramjet mode, no fuel used for turbojet mode
+        final_f1[i_rj]  = 0.0*Mo[i_rj]/Mo[i_rj]
         
-        mixed_temperature = 0.0*Mo/Mo
-        mixed_pressure    = 0.0*Mo/Mo
+        #-- If turbojet mode, no fuel used for ramjet mode
+        final_f2[i_tj]  = 0.0*Mo[i_tj]/Mo[i_tj]
         
+        #-- Corrected fuel-to-air ratios of both combustors
+        combustor.outputs.fuel_to_air_ratio     = final_f1
+        combustor_2.outputs.fuel_to_air_ratio   = final_f2
+            
         # Nozzle
         #-- Turbojet operation
         mixed_temperature[i_tj] = low_pressure_turbine.outputs.stagnation_temperature[i_tj] 
@@ -242,67 +250,75 @@ class Turboramjet(Propulsor):
         mixed_pressure[i_rj]    = combustor_2.outputs.stagnation_pressure[i_rj]
         mixed_temperature[i_rj] = combustor_2.outputs.stagnation_temperature[i_rj]
 
+        #-- link the combustor to the correct stagnation temperatures
+        core_nozzle.inputs.stagnation_temperature   = mixed_temperature
+        core_nozzle.inputs.stagnation_pressure      = mixed_pressure
         
-        core_nozzle.inputs.stagnation_temperature = mixed_temperature
-        core_nozzle.inputs.stagnation_pressure = mixed_pressure
+        #flow through nozzle
         core_nozzle(conditions)
         
-        print 'TURBOJET ', i_tj
-        print '-------------------------------------------'
-        print 'INLET '
-        print 'Pressure    :', inlet_nozzle.outputs.stagnation_pressure
-        print 'Temperature :', inlet_nozzle.outputs.stagnation_temperature
-        print '-------------------------------------------'
-        print 'LOW PRESSURE COMPRESSOR '
-        print 'Pressure    :', low_pressure_compressor.outputs.stagnation_pressure
-        print 'Temperature :', low_pressure_compressor.outputs.stagnation_temperature         
-        print '-------------------------------------------'
-        print 'HIGH PRESSURE COMPRESSOR '
-        print 'Pressure    :', high_pressure_compressor.outputs.stagnation_pressure
-        print 'Temperature :', high_pressure_compressor.outputs.stagnation_temperature       
-        print '-------------------------------------------'
-        print 'COMBUSTOR 1 '
-        print 'f 1 : ', combustor.outputs.fuel_to_air_ratio
-        print '-------------------------------------------'
-        print 'HIGH PRESSURE TURBINE '
-        print 'Pressure    :', high_pressure_turbine.outputs.stagnation_pressure
-        print 'Temperature :', high_pressure_turbine.outputs.stagnation_temperature
-                      
-        print '-------------------------------------------'
-        print 'LOW PRESSURE TURBINE '
-        print 'Pressure    :', low_pressure_turbine.outputs.stagnation_pressure
-        print 'Temperature :', low_pressure_turbine.outputs.stagnation_temperature
-    
-        print '-------------------------------------------'
-        print 'SECOND COMBUSTOR '
-        print 'f 2 : ', combustor_2.outputs.fuel_to_air_ratio
-        print 'Pressure IN :', combustor_2.inputs.stagnation_pressure
-        print 'TemperatureIN:', combustor_2.inputs.stagnation_temperature
-    
-
-        print '-------------------------------------------'
-        print 'NOZZLE '
-        print 'Pressure    :', core_nozzle.outputs.stagnation_pressure
-        print 'Temperature :', core_nozzle.outputs.stagnation_temperature
-        print '-------------------------------------------'
+#        print 'TURBOJET ', i_tj
+#        print '-------------------------------------------'
+#        print 'INLET '
+#        print 'Pressure    :', inlet_nozzle.outputs.stagnation_pressure
+#        print 'Temperature :', inlet_nozzle.outputs.stagnation_temperature
+#        print '-------------------------------------------'
+#        print 'LOW PRESSURE COMPRESSOR '
+#        print 'Pressure    :', low_pressure_compressor.outputs.stagnation_pressure
+#        print 'Temperature :', low_pressure_compressor.outputs.stagnation_temperature         
+#        print '-------------------------------------------'
+#        print 'HIGH PRESSURE COMPRESSOR '
+#        print 'Pressure    :', high_pressure_compressor.outputs.stagnation_pressure
+#        print 'Temperature :', high_pressure_compressor.outputs.stagnation_temperature       
+#        print '-------------------------------------------'
+#        print 'COMBUSTOR 1 '
+#        print 'f 1 : ', combustor.outputs.fuel_to_air_ratio
+#        print '-------------------------------------------'
+#        print 'HIGH PRESSURE TURBINE '
+#        print 'Pressure    :', high_pressure_turbine.outputs.stagnation_pressure
+#        print 'Temperature :', high_pressure_turbine.outputs.stagnation_temperature
+#                      
+#        print '-------------------------------------------'
+#        print 'LOW PRESSURE TURBINE '
+#        print 'Pressure    :', low_pressure_turbine.outputs.stagnation_pressure
+#        print 'Temperature :', low_pressure_turbine.outputs.stagnation_temperature
+#    
+#        print '-------------------------------------------'
+#        print 'SECOND COMBUSTOR '
+#        print 'f 2 : ', combustor_2.outputs.fuel_to_air_ratio
+#        print 'Pressure IN :', combustor_2.inputs.stagnation_pressure
+#        print 'TemperatureIN:', combustor_2.inputs.stagnation_temperature
+#    
+#
+#        print '-------------------------------------------'
+#        print 'NOZZLE '
+#        print 'Pressure    :', core_nozzle.outputs.stagnation_pressure
+#        print 'Temperature :', core_nozzle.outputs.stagnation_temperature
+#        print '-------------------------------------------'
+  
+        #link the thrust component to the combustor 
+        thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio + combustor_2.outputs.fuel_to_air_ratio
       
+        # link the thrust componet to the correct referece pressures
+        # Turbojet link
+        mixed_temperature[i_tj]                                = low_pressure_compressor.outputs.stagnation_temperature[i_tj]
+        mixed_pressure[i_tj]                                   = low_pressure_compressor.outputs.stagnation_pressure[i_tj]
+        
+        # Ramjet link
+        mixed_temperature[i_rj]                                = combustor_2.outputs.stagnation_temperature[i_rj]
+        mixed_pressure[i_rj]                                   = combustor_2.outputs.stagnation_pressure[i_rj]
+        
+        thrust.inputs.total_temperature_reference              = mixed_temperature
+        thrust.inputs.total_pressure_reference                 = mixed_pressure
+
+        thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio + combustor_2.outputs.fuel_to_air_ratio
+
+
         #link the thrust component to the core nozzle
         thrust.inputs.core_exit_velocity                       = core_nozzle.outputs.velocity
         thrust.inputs.core_area_ratio                          = core_nozzle.outputs.area_ratio
         thrust.inputs.core_nozzle                              = core_nozzle.outputs
-        
-        #link the thrust component to the combustor
-        final_f1  = combustor.outputs.fuel_to_air_ratio
-        final_f2  = combustor_2.outputs.fuel_to_air_ratio
-        final_f1[i_rj] = 0.0*Mo[i_rj]/Mo[i_rj]
-        final_f2[i_tj] = 0.0*Mo[i_tj]/Mo[i_tj]
-        
-        combustor.outputs.fuel_to_air_ratio = final_f1
-        combustor_2.outputs.fuel_to_air_ratio = final_f2
-        print 'FINAL F', (combustor.outputs.fuel_to_air_ratio + combustor_2.outputs.fuel_to_air_ratio)
-        
-        thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio + combustor_2.outputs.fuel_to_air_ratio
-     
+             
         #link the thrust component to the low pressure compressor 
         #-- Turbojet mode
         thrust.inputs.total_temperature_reference             = inlet_nozzle.outputs.stagnation_temperature
@@ -322,7 +338,6 @@ class Turboramjet(Propulsor):
         F_vec        = conditions.ones_row(3) * 0.0
         F_vec[:,0]   = F[:,0]
         F            = F_vec
-
         results = Data()
         results.thrust_force_vector = F
         results.vehicle_mass_rate   = mdot
@@ -398,15 +413,16 @@ class Turboramjet(Propulsor):
         inlet_nozzle(conditions)
         
         
-        # Bypass system
-        Mo       = conditions.freestream.mach_number
-        i_tj = Mo < mach_separation
-        i_rj = Mo > mach_separation
+        #Bypass system
+        Mo      = conditions.freestream.mach_number
+        #-- Defines turbojet operation
+        i_tj    = Mo < mach_separation
     
-        print 'TURBOJET ', i_tj
-
+        #-- Defines ramjet operation
+        i_rj    = Mo > mach_separation
+    
         #----------------------
-        # TURBOJET OPERATION
+        # TURBOJET-ONLY OPERATION
         #----------------------
 
         #--link low pressure compressor to the inlet nozzle
@@ -456,75 +472,61 @@ class Turboramjet(Propulsor):
             
         #flow through the low pressure turbine
         low_pressure_turbine(conditions)
-        print 'ola estou aqui'
-        #link the combustor to the network   
+        
+        
+        #----------------------
+        # SEPARATION OF OPERATIONS
+        #----------------------
+     
+    
         #-- Turbojet operation
+        #---- Ignore the second combustor
         if i_tj :
+            # Link the nozzle to the low pressure turbine
             core_nozzle.inputs.stagnation_temperature       = low_pressure_turbine.outputs.stagnation_temperature
             core_nozzle.inputs.stagnation_pressure          = low_pressure_turbine.outputs.stagnation_pressure
+    
+        #-- Ramjet operation
         else :
-            #-- Ramjet operation
+            # Link the second combustor to the network
             combustor_2.inputs.stagnation_temperature       = inlet_nozzle.outputs.stagnation_temperature
             combustor_2.inputs.stagnation_pressure          = inlet_nozzle.outputs.stagnation_pressure
+        
+            # flow through combustor
             combustor_2(conditions)
         
+            # Link the nozzle to the combustor
             core_nozzle.inputs.stagnation_temperature       = combustor_2.outputs.stagnation_temperature
             core_nozzle.inputs.stagnation_pressure          = combustor_2.outputs.stagnation_pressure
-       
-        core_nozzle(conditions)
-        print 'TURBOJET ', i_tj
-        print '-------------------------------------------'
-        print 'INLET '
-        print 'Pressure    :', inlet_nozzle.outputs.stagnation_pressure
-        print 'Temperature :', inlet_nozzle.outputs.stagnation_temperature
-        print '-------------------------------------------'
-        print 'LOW PRESSURE COMPRESSOR '
-        print 'Pressure    :', low_pressure_compressor.outputs.stagnation_pressure
-        print 'Temperature :', low_pressure_compressor.outputs.stagnation_temperature         
-        print '-------------------------------------------'
-        print 'HIGH PRESSURE COMPRESSOR '
-        print 'Pressure    :', high_pressure_compressor.outputs.stagnation_pressure
-        print 'Temperature :', high_pressure_compressor.outputs.stagnation_temperature       
-        print '-------------------------------------------'
-        print 'COMBUSTOR 1 '
-        print 'f 1 : ', combustor.outputs.fuel_to_air_ratio
-        print '-------------------------------------------'
-        print 'HIGH PRESSURE TURBINE '
-        print 'Pressure    :', high_pressure_turbine.outputs.stagnation_pressure
-        print 'Temperature :', high_pressure_turbine.outputs.stagnation_temperature
-                      
-        print '-------------------------------------------'
-        print 'LOW PRESSURE TURBINE '
-        print 'Pressure    :', low_pressure_turbine.outputs.stagnation_pressure
-        print 'Temperature :', low_pressure_turbine.outputs.stagnation_temperature
     
-        print '-------------------------------------------'
-        print 'SECOND COMBUSTOR '
-        print 'f 2 : ', combustor_2.outputs.fuel_to_air_ratio
-    
-
-        print '-------------------------------------------'
-        print 'NOZZLE '
-        print 'Pressure    :', core_nozzle.outputs.stagnation_pressure
-        print 'Temperature :', core_nozzle.outputs.stagnation_temperature
-        print '-------------------------------------------'
-    
-        
+        # flow through nozzle
+        core_nozzle(conditions)  
+     
         #link the thrust component to the core nozzle
         thrust.inputs.core_exit_velocity                       = core_nozzle.outputs.velocity
         thrust.inputs.core_area_ratio                          = core_nozzle.outputs.area_ratio
         thrust.inputs.core_nozzle                              = core_nozzle.outputs
-        
+                
+        if i_tj :
+            # if turbojet mode only, disregard fuel calculations for second combustor
+            # apply correct reference parameters
+            combustor_2.outputs.fuel_to_air_ratio              = 0.0
+            thrust.inputs.total_temperature_reference          = inlet_nozzle.outputs.stagnation_temperature
+            thrust.inputs.total_pressure_reference             = inlet_nozzle.outputs.stagnation_pressure
+
+        else:
+            # if ramjet mode only, disregard fuel calculations for first combustor
+            combustor.outputs.fuel_to_air_ratio                = 0.0
+            thrust.inputs.total_temperature_reference          = combustor_2.outputs.stagnation_temperature
+            thrust.inputs.total_pressure_reference             = combustor_2.outputs.stagnation_pressure
+    
         #link the thrust component to the combustor
         thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio + combustor_2.outputs.fuel_to_air_ratio
-        
-        #link the thrust component to the low pressure compressor 
-        thrust.inputs.total_temperature_reference              = low_pressure_compressor.outputs.stagnation_temperature
-        thrust.inputs.total_pressure_reference                 = low_pressure_compressor.outputs.stagnation_pressure
+
         thrust.inputs.number_of_engines                        = number_of_engines
         thrust.inputs.bypass_ratio                             = bypass_ratio
-        thrust.inputs.flow_through_core                        = 1./(1.+bypass_ratio) #scaled constant to turn on core thrust computation
-        thrust.inputs.flow_through_fan                         = bypass_ratio/(1.+bypass_ratio) #scaled constant to turn on fan thrust computation        
+        thrust.inputs.flow_through_core                        = 1.0 #scaled constant to turn on core thrust computation
+        thrust.inputs.flow_through_fan                         = 0.0 #scaled constant to turn on fan thrust computation        
 
         #compute the thrust
         thrust.size(conditions)
