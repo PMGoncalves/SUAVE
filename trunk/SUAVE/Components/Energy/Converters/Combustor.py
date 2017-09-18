@@ -129,12 +129,15 @@ class Combustor(Energy_Component):
         ray_analysis    = self.rayleigh_analyses
         ar              = self.area_ratio
         
+        Tt4 = Tt4 * Tt_in/Tt_in
+        
         # Rayleigh flow analysis, constant pressure burner
         if ray_analysis:
             
             # Initialize arrays
             M_out  = 1*Pt_in/Pt_in
             Ptr   = 1*Pt_in/Pt_in
+            Mach = Mach*Pt_in/Pt_in
 
             # Make i_rayleigh the size of output arrays
             i_rayleigh = Pt_in < 2*Pt_in

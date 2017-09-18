@@ -234,8 +234,15 @@ def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_is
     #link the thrust component to the combustor
     print 'F 1', combustor.outputs.fuel_to_air_ratio
     print 'F 2', combustor_2.outputs.fuel_to_air_ratio
+    
+    if i_tj :
+        combustor_2.outputs.fuel_to_air_ratio = 0.0
+    else:
+        combustor.outputs.fuel_to_air_ratio = 0.0
+
+
     thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio + combustor_2.outputs.fuel_to_air_ratio
-     
+    print 'ahoy', thrust.inputs.fuel_to_air_ratio   
     #link the thrust component to the low pressure compressor 
     #-- Turbojet mode
     thrust.inputs.total_temperature_reference             = inlet_nozzle.outputs.stagnation_temperature
@@ -249,8 +256,8 @@ def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_is
     thrust.inputs.fan_nozzle.area_ratio = 0.0
     thrust.inputs.fan_nozzle.static_pressure = 0.0
     thrust.inputs.bypass_ratio = 0.0
-    thrust.inputs.flow_through_core                        = 1./(1.+bypass_ratio) #scaled constant to turn on core thrust computation
-    thrust.inputs.flow_through_fan                         = bypass_ratio/(1.+bypass_ratio) #scaled constant to turn on fan thrust computation        
+    thrust.inputs.flow_through_core                        = 1.0 #scaled constant to turn on core thrust computation
+    thrust.inputs.flow_through_fan                         = 0.0 #scaled constant to turn on fan thrust computation        
 
     #compute the thrust
     thrust.size(conditions)

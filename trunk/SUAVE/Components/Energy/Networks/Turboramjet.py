@@ -203,25 +203,50 @@ class Turboramjet(Propulsor):
         print 'INLET '
         print 'Pressure    :', inlet_nozzle.outputs.stagnation_pressure
         print 'Temperature :', inlet_nozzle.outputs.stagnation_temperature
-        print '-------------------------------------------'      
+        print '-------------------------------------------'    
+        
+        mixed_temperature = 0.0*Mo/Mo
+        mixed_pressure    = 0.0*Mo/Mo
+        
+        # Combustor
         #-- Turbojet operation
-        combustor_2.inputs.stagnation_temperature[i_tj]        = low_pressure_turbine.outputs.stagnation_temperature[i_tj] 
-        combustor_2.inputs.stagnation_pressure[i_tj]           = low_pressure_turbine.outputs.stagnation_pressure[i_tj] 
-
+        mixed_temperature[i_tj] = low_pressure_turbine.outputs.stagnation_temperature[i_tj] 
+        mixed_pressure[i_tj] = low_pressure_turbine.outputs.stagnation_pressure[i_tj] 
+        
         #-- Ramjet operation
-        combustor_2.inputs.stagnation_temperature[i_rj]       = inlet_nozzle.outputs.stagnation_temperature[i_rj]
-        combustor_2.inputs.stagnation_pressure[i_rj]          = inlet_nozzle.outputs.stagnation_pressure[i_rj]
+        mixed_temperature[i_rj] = inlet_nozzle.outputs.stagnation_temperature[i_rj]
+        mixed_pressure[i_rj] = inlet_nozzle.outputs.stagnation_pressure[i_rj]
+        
+        combustor_2.inputs.stagnation_temperature = mixed_temperature
+        combustor_2.inputs.stagnation_pressure = mixed_pressure
         
         combustor_2(conditions)
         
+        final_f1  = combustor.outputs.fuel_to_air_ratio
+        final_f2  = combustor_2.outputs.fuel_to_air_ratio
+        final_f1[i_rj] = 0.0*Mo[i_rj]/Mo[i_rj]
+        final_f2[i_tj] = 0.0*Mo[i_tj]/Mo[i_tj]
+        
+        combustor.outputs.fuel_to_air_ratio = final_f1
+        combustor_2.outputs.fuel_to_air_ratio = final_f2
+        
+        mixed_temperature = 0.0*Mo/Mo
+        mixed_pressure    = 0.0*Mo/Mo
+        
+        # Nozzle
         #-- Turbojet operation
-        core_nozzle.inputs.stagnation_temperature[i_tj]      = low_pressure_turbine.outputs.stagnation_temperature[i_tj] 
-        core_nozzle.inputs.stagnation_pressure[i_tj]         = low_pressure_turbine.outputs.stagnation_pressure[i_tj] 
+        mixed_temperature[i_tj] = low_pressure_turbine.outputs.stagnation_temperature[i_tj] 
+        mixed_pressure[i_tj]    = low_pressure_turbine.outputs.stagnation_pressure[i_tj] 
 
         #-- Ramjet operation
-        core_nozzle.inputs.stagnation_temperature[i_rj]      = combustor_2.outputs.stagnation_temperature[i_rj] 
-        core_nozzle.inputs.stagnation_pressure[i_rj]         = combustor_2.outputs.stagnation_pressure[i_rj]   
+        mixed_pressure[i_rj]    = combustor_2.outputs.stagnation_pressure[i_rj]
+        mixed_temperature[i_rj] = combustor_2.outputs.stagnation_temperature[i_rj]
 
+        
+        core_nozzle.inputs.stagnation_temperature = mixed_temperature
+        core_nozzle.inputs.stagnation_pressure = mixed_pressure
+        core_nozzle(conditions)
+        
         print 'TURBOJET ', i_tj
         print '-------------------------------------------'
         print 'INLET '
@@ -251,6 +276,8 @@ class Turboramjet(Propulsor):
         print '-------------------------------------------'
         print 'SECOND COMBUSTOR '
         print 'f 2 : ', combustor_2.outputs.fuel_to_air_ratio
+        print 'Pressure IN :', combustor_2.inputs.stagnation_pressure
+        print 'TemperatureIN:', combustor_2.inputs.stagnation_temperature
     
 
         print '-------------------------------------------'
@@ -265,6 +292,15 @@ class Turboramjet(Propulsor):
         thrust.inputs.core_nozzle                              = core_nozzle.outputs
         
         #link the thrust component to the combustor
+        final_f1  = combustor.outputs.fuel_to_air_ratio
+        final_f2  = combustor_2.outputs.fuel_to_air_ratio
+        final_f1[i_rj] = 0.0*Mo[i_rj]/Mo[i_rj]
+        final_f2[i_tj] = 0.0*Mo[i_tj]/Mo[i_tj]
+        
+        combustor.outputs.fuel_to_air_ratio = final_f1
+        combustor_2.outputs.fuel_to_air_ratio = final_f2
+        print 'FINAL F', (combustor.outputs.fuel_to_air_ratio + combustor_2.outputs.fuel_to_air_ratio)
+        
         thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio + combustor_2.outputs.fuel_to_air_ratio
      
         #link the thrust component to the low pressure compressor 
