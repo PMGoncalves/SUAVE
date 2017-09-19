@@ -186,12 +186,9 @@ class Thrust(Energy_Component):
         #computing the dimensional thrust
         FD2              = Fsp*a0*(1+bypass_ratio)*mdot_core*no_eng*throttle
 
-     
-        
         #fuel flow rate
         a = np.array([0.])        
         fuel_flow_rate   = np.fmax(0.1019715*FD2*TSFC/3600,a) #use units package for the constants
-        
         #computing the power 
         power            = FD2*u0
         

@@ -81,9 +81,9 @@ def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_is
 
         
     thrust                    = turboramjet.thrust
+    bypass_ratio              = turboramjet.bypass_ratio
     number_of_engines         = turboramjet.number_of_engines   
-    turbojet_mach             = turboramjet.turbojet_mach
-    ramjet_mach               = turboramjet.ramjet_mach
+    mach_separation           = turboramjet.mach_separation
         
     #Creating the network by manually linking the different components
         
@@ -101,21 +101,12 @@ def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_is
     inlet_nozzle(conditions)        
         
     #Bypass system
-    
     Mo      = conditions.freestream.mach_number
     #-- Defines turbojet operation
-    i_tj    = Mo <= turbojet_mach
+    i_tj    = Mo < mach_separation
     
-    #-- Defines dual operation mode
-    i_mx    = np.logical_and(Mo > turbojet_mach, Mo < ramjet_mach)
     #-- Defines ramjet operation
-    i_rj    = Mo >= ramjet_mach
-    
-    #-- Determine ramjet bypass ratio
-    # Only used for Mo between max Mach for turbojet and min Mach for ramjet
-    # ram_bypass = 1 for Mo = min Mach for ramjet
-    # ram_bypass = 0 for Mo = max Mach for turbojet
-    ram_bypass = 1/(ramjet_mach - turbojet_mach) * (Mo - turbojet_mach)
+    i_rj    = Mo > mach_separation
 
  
     #----------------------
@@ -191,24 +182,12 @@ def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_is
         core_nozzle.inputs.stagnation_temperature       = low_pressure_turbine.outputs.stagnation_temperature
         core_nozzle.inputs.stagnation_pressure          = low_pressure_turbine.outputs.stagnation_pressure
     
-    
+    #-- Ramjet operation
     else :
-        #-- Ramjet operation
-        if i_rj:
-            # Link the second combustor to the network
-            combustor_2.inputs.stagnation_temperature       = inlet_nozzle.outputs.stagnation_temperature
-            combustor_2.inputs.stagnation_pressure          = inlet_nozzle.outputs.stagnation_pressure
+        # Link the second combustor to the network
+        combustor_2.inputs.stagnation_temperature       = inlet_nozzle.outputs.stagnation_temperature
+        combustor_2.inputs.stagnation_pressure          = inlet_nozzle.outputs.stagnation_pressure
         
-        #-- Dual mode operation
-        if i_mx:
-            # mixing properties, assuming same pressure
-            mixed_temperature = ram_bypass*inlet_nozzle.outputs.stagnation_temperature + (1-ram_bypass)*low_pressure_turbine.outputs.stagnation_temperature
-            mixed_pressure    = low_pressure_turbine.outputs.stagnation_pressure
-            
-            # link the second combustor to the network
-            combustor_2.inputs.stagnation_temperature       = mixed_temperature
-            combustor_2.inputs.stagnation_pressure          = mixed_pressure
-
         # flow through combustor
         combustor_2(conditions)
         
@@ -232,15 +211,11 @@ def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_is
         thrust.inputs.total_temperature_reference          = low_pressure_compressor.outputs.stagnation_temperature
         thrust.inputs.total_pressure_reference             = low_pressure_compressor.outputs.stagnation_pressure
 
-    else :
-        thrust.inputs.total_temperature_reference          = inlet_nozzle.outputs.stagnation_temperature
-        thrust.inputs.total_pressure_reference             = inlet_nozzle.outputs.stagnation_pressure
-        
-        if i_rj :
-            # if ramjet mode only, disregard fuel calculations for first combustor
-            combustor.outputs.fuel_to_air_ratio                = 0.0
-            
-
+    else:
+        # if ramjet mode only, disregard fuel calculations for first combustor
+        combustor.outputs.fuel_to_air_ratio                = 0.0
+        thrust.inputs.total_temperature_reference          = combustor_2.outputs.stagnation_temperature
+        thrust.inputs.total_pressure_reference             = combustor_2.outputs.stagnation_pressure
 
 
     thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio + combustor_2.outputs.fuel_to_air_ratio

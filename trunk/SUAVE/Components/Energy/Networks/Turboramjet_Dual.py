@@ -60,8 +60,6 @@ class Turboramjet(Propulsor):
         self.nacelle_diameter  = 1.0
         self.engine_length     = 1.0
         self.bypass_ratio      = 0.0
-        self.turbojet_mach     = 1.5
-        self.ramjet_mach       = 2.5
         
         #areas needed for drag; not in there yet
         self.areas             = Data()
@@ -124,11 +122,9 @@ class Turboramjet(Propulsor):
 
         
         thrust                    = self.thrust
-        number_of_engines         = self.number_of_engines   
-        turbojet_mach             = self.turbojet_mach
-        ramjet_mach               = self.ramjet_mach
         bypass_ratio              = self.bypass_ratio
-
+        number_of_engines         = self.number_of_engines  
+        mach_separation           = self.mach_separation
         
         #Creating the network by manually linking the different components
         
@@ -147,23 +143,9 @@ class Turboramjet(Propulsor):
         
         # Bypass system
         Mo      = conditions.freestream.mach_number
-        
-        #-- Defines turbojet operation
-        i_tj    = Mo <= turbojet_mach
-        
-        #-- Defines dual operation mode
-        i_mx    = np.logical_and(Mo > turbojet_mach, Mo < ramjet_mach)
-        
-        #-- Defines ramjet operation
-        i_rj    = Mo >= ramjet_mach
-        
-        
-        #-- Determine ramjet bypass ratio
-        # Only used for Mo between max Mach for turbojet and min Mach for ramjet
-        # ram_bypass = 1 for Mo = min Mach for ramjet
-        # ram_bypass = 0 for Mo = max Mach for turbojet
-        ram_bypass = 1/(ramjet_mach - turbojet_mach) * (Mo - turbojet_mach)
-        
+        i_tj    = Mo < mach_separation
+        i_rj    = Mo > mach_separation
+    
             
         #----------------------
         # TURBOJET OPERATION
@@ -216,17 +198,15 @@ class Turboramjet(Propulsor):
             
         #flow through the low pressure turbine
         low_pressure_turbine(conditions) 
-                
+        
         #----------------------
         # SEPARATION OF OPERATIONS
         #----------------------
-
-
+        
         # Initalize arrays
         mixed_temperature   = 0.0*Mo/Mo
         mixed_pressure      = 0.0*Mo/Mo
         mach_number         = 0.1*Mo/Mo
-        ram_bypass          = ram_bypass*Mo/Mo
         
         # Combustor
         #-- Turbojet operation
@@ -239,17 +219,10 @@ class Turboramjet(Propulsor):
         mixed_pressure[i_rj]    = inlet_nozzle.outputs.stagnation_pressure[i_rj]
         mach_number[i_rj]       = inlet_nozzle.outputs.mach_number[i_rj]
         
-
-        #-- Dual mode operation
-        mixed_temperature[i_mx] = ram_bypass[i_mx]*inlet_nozzle.outputs.stagnation_temperature[i_mx] + (1-ram_bypass[i_mx])*low_pressure_turbine.outputs.stagnation_temperature[i_mx]
-        mixed_pressure[i_mx]    = low_pressure_turbine.outputs.stagnation_pressure[i_mx]
-        mach_number[i_mx]       = inlet_nozzle.outputs.mach_number[i_mx]
-        
         #-- link the combustor to the correct stagnation properties
         combustor_2.inputs.stagnation_temperature   = mixed_temperature
         combustor_2.inputs.stagnation_pressure      = mixed_pressure
-        combustor_2.inputs.mach_number              = mach_number
-
+        #combustor_2.inputs.mach_number              = mach_number
         
         # flow through combustor
         combustor_2(conditions)
@@ -267,7 +240,7 @@ class Turboramjet(Propulsor):
         #-- Corrected fuel-to-air ratios of both combustors
         combustor.outputs.fuel_to_air_ratio     = final_f1
         combustor_2.outputs.fuel_to_air_ratio   = final_f2
-        print'Combustor', combustor_2.outputs.stagnation_temperature
+            
         # Nozzle
         #-- Turbojet operation
         mixed_temperature[i_tj] = low_pressure_turbine.outputs.stagnation_temperature[i_tj] 
@@ -276,10 +249,6 @@ class Turboramjet(Propulsor):
         #-- Ramjet operation
         mixed_pressure[i_rj]    = combustor_2.outputs.stagnation_pressure[i_rj]
         mixed_temperature[i_rj] = combustor_2.outputs.stagnation_temperature[i_rj]
-        
-        #-- Dual mode operation
-        mixed_pressure[i_mx]    = combustor_2.outputs.stagnation_pressure[i_mx]
-        mixed_temperature[i_mx] = combustor_2.outputs.stagnation_temperature[i_mx]
 
         #-- link the combustor to the correct stagnation temperatures
         core_nozzle.inputs.stagnation_temperature   = mixed_temperature
@@ -336,13 +305,9 @@ class Turboramjet(Propulsor):
         mixed_pressure[i_tj]                                   = low_pressure_compressor.outputs.stagnation_pressure[i_tj]
         
         # Ramjet link
-        mixed_temperature[i_rj]                                = inlet_nozzle.outputs.stagnation_temperature[i_rj]
-        mixed_pressure[i_rj]                                   = inlet_nozzle.outputs.stagnation_pressure[i_rj]
-  
-        # Ramjet link
-        mixed_temperature[i_mx]                                = inlet_nozzle.outputs.stagnation_temperature[i_mx]
-        mixed_pressure[i_mx]                                   = inlet_nozzle.outputs.stagnation_pressure[i_mx]
-      
+        mixed_temperature[i_rj]                                = combustor_2.outputs.stagnation_temperature[i_rj]
+        mixed_pressure[i_rj]                                   = combustor_2.outputs.stagnation_pressure[i_rj]
+        
         thrust.inputs.total_temperature_reference              = mixed_temperature
         thrust.inputs.total_pressure_reference                 = mixed_pressure
 
@@ -356,6 +321,8 @@ class Turboramjet(Propulsor):
              
         #link the thrust component to the low pressure compressor 
         #-- Turbojet mode
+        thrust.inputs.total_temperature_reference             = inlet_nozzle.outputs.stagnation_temperature
+        thrust.inputs.total_pressure_reference                 = inlet_nozzle.outputs.stagnation_pressure
         thrust.inputs.number_of_engines                        = number_of_engines
         thrust.inputs.bypass_ratio                             = bypass_ratio
         thrust.inputs.flow_through_core                        = 1.0 #scaled constant to turn on core thrust computation
@@ -426,10 +393,9 @@ class Turboramjet(Propulsor):
 
         
         thrust                    = self.thrust
-        number_of_engines         = self.number_of_engines   
-        turbojet_mach             = self.turbojet_mach
-        ramjet_mach               = self.ramjet_mach
         bypass_ratio              = self.bypass_ratio
+        number_of_engines         = self.number_of_engines   
+        mach_separation           = self.mach_separation
         
         #Creating the network by manually linking the different components
         
@@ -446,22 +412,14 @@ class Turboramjet(Propulsor):
         #Flow through the inlet nozzle
         inlet_nozzle(conditions)
         
+        
         #Bypass system
         Mo      = conditions.freestream.mach_number
         #-- Defines turbojet operation
-        i_tj    = Mo <= turbojet_mach
-        
-        #-- Defines dual operation mode
-        i_mx    = np.logical_and(Mo > turbojet_mach, Mo < ramjet_mach)
-        
+        i_tj    = Mo < mach_separation
+    
         #-- Defines ramjet operation
-        i_rj    = Mo >= ramjet_mach
-        
-        #-- Determine ramjet bypass ratio
-        # Only used for Mo between max Mach for turbojet and min Mach for ramjet
-        # ram_bypass = 1 for Mo = min Mach for ramjet
-        # ram_bypass = 0 for Mo = max Mach for turbojet
-        ram_bypass = 1/(ramjet_mach - turbojet_mach) * (Mo - turbojet_mach)
+        i_rj    = Mo > mach_separation
     
         #----------------------
         # TURBOJET-ONLY OPERATION
@@ -527,33 +485,21 @@ class Turboramjet(Propulsor):
             # Link the nozzle to the low pressure turbine
             core_nozzle.inputs.stagnation_temperature       = low_pressure_turbine.outputs.stagnation_temperature
             core_nozzle.inputs.stagnation_pressure          = low_pressure_turbine.outputs.stagnation_pressure
-        
-        
-        else :
-            #-- Ramjet operation
-            if i_rj:
-                # Link the second combustor to the network
-                combustor_2.inputs.stagnation_temperature       = inlet_nozzle.outputs.stagnation_temperature
-                combustor_2.inputs.stagnation_pressure          = inlet_nozzle.outputs.stagnation_pressure
-            
-            #-- Dual mode operation
-            if i_mx:
-                # mixing properties, assuming same pressure
-                mixed_temperature = ram_bypass*inlet_nozzle.outputs.stagnation_temperature + (1-ram_bypass)*low_pressure_turbine.outputs.stagnation_temperature
-                mixed_pressure    = low_pressure_turbine.outputs.stagnation_pressure
-                
-                # link the second combustor to the network
-                combustor_2.inputs.stagnation_temperature       = mixed_temperature
-                combustor_2.inputs.stagnation_pressure          = mixed_pressure
     
+        #-- Ramjet operation
+        else :
+            # Link the second combustor to the network
+            combustor_2.inputs.stagnation_temperature       = inlet_nozzle.outputs.stagnation_temperature
+            combustor_2.inputs.stagnation_pressure          = inlet_nozzle.outputs.stagnation_pressure
+        
             # flow through combustor
             combustor_2(conditions)
-            
+        
             # Link the nozzle to the combustor
             core_nozzle.inputs.stagnation_temperature       = combustor_2.outputs.stagnation_temperature
             core_nozzle.inputs.stagnation_pressure          = combustor_2.outputs.stagnation_pressure
-
-        #flow thro
+    
+        # flow through nozzle
         core_nozzle(conditions)  
      
         #link the thrust component to the core nozzle
@@ -565,16 +511,15 @@ class Turboramjet(Propulsor):
             # if turbojet mode only, disregard fuel calculations for second combustor
             # apply correct reference parameters
             combustor_2.outputs.fuel_to_air_ratio              = 0.0
-            thrust.inputs.total_temperature_reference          = low_pressure_compressor.outputs.stagnation_temperature
-            thrust.inputs.total_pressure_reference             = low_pressure_compressor.outputs.stagnation_pressure
-    
-        else :
             thrust.inputs.total_temperature_reference          = inlet_nozzle.outputs.stagnation_temperature
             thrust.inputs.total_pressure_reference             = inlet_nozzle.outputs.stagnation_pressure
-            
-            if i_rj :
-                # if ramjet mode only, disregard fuel calculations for first combustor
-                combustor.outputs.fuel_to_air_ratio                = 0.0
+
+        else:
+            # if ramjet mode only, disregard fuel calculations for first combustor
+            combustor.outputs.fuel_to_air_ratio                = 0.0
+            thrust.inputs.total_temperature_reference          = combustor_2.outputs.stagnation_temperature
+            thrust.inputs.total_pressure_reference             = combustor_2.outputs.stagnation_pressure
+    
         #link the thrust component to the combustor
         thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio + combustor_2.outputs.fuel_to_air_ratio
 
