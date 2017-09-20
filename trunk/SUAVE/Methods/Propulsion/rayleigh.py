@@ -49,7 +49,7 @@ def rayleigh(gamma, M0, TtR):
     M1_guess[i_high]= 1.1
 
         
-    M1 = fsolve(func,M1_guess)
+    M1 = fsolve(func,M1_guess,factor=0.1)
     
     #Calculate stagnation pressure ratio
     Ptr = (1+gamma*M0**2)/(1+gamma*M1**2)*((1+(gamma-1)/2*M1**2)/(1+(gamma-1)/2*M0**2))**(gamma/(gamma-1))

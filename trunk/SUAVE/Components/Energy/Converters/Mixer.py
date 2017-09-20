@@ -109,7 +109,7 @@ class Mixer(Energy_Component):
 #        M_in_2   = self.inputs.mach_2
         
         #unpack from self
-        A2_A1    = self.area_ratio
+        A3_A1    = self.inputs.area_ratio
         
         
         # Compute static properties coming from component 1
@@ -130,11 +130,10 @@ class Mixer(Energy_Component):
         P_in_2[i_total] = Pt_in_2[i_total]
         
         M_in_2 = np.sqrt((((Pt_in_2/P_in_2)**((gamma-1)/gamma))-1)*2/(gamma-1))
-        print 'Tt_in_2', Tt_in_2[-1]
-        print 'Pt_in_2 / Pt_in_2', Pt_in_2[-1]/P_in_2[-1]
         T_in_2   = ((1+(gamma-1)/2*M_in_2**2)**-1)*Tt_in_2
 
         # Compute intermediate variables for mixing equation
+        A2_A1    = A3_A1 - 1
         alpha    = A2_A1*P_in_2/P_in
         ksi      = M_in_2/M_in
         theta    = T_in_2/T_in   

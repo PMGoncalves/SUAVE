@@ -192,8 +192,7 @@ class Thrust(Energy_Component):
         #computing the power 
         power            = FD2*u0
         np.set_printoptions(threshold=np.inf)
-        print 'core_nozzle', core_nozzle.velocity/u0
-        print 'core_pressure', mdot_core
+        
 
         #pack outputs
         

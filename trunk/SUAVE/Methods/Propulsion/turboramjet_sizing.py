@@ -117,7 +117,8 @@ def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_is
     # ram_bypass = 1 for Mo = min Mach for ramjet
     # ram_bypass = 0 for Mo = max Mach for turbojet
     ram_bypass = 1/(ramjet_mach - turbojet_mach) * (Mo - turbojet_mach)
-
+    ram_bypass[i_tj] = 0.01
+    ram_bypass[i_rj] = 1.00
  
     #----------------------
     # TURBOJET-ONLY OPERATION
@@ -210,6 +211,7 @@ def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_is
             mixer.inputs.stagnation_temperature_2   = low_pressure_turbine.outputs.stagnation_temperature
             mixer.inputs.stagnation_pressure_2      = low_pressure_turbine.outputs.stagnation_pressure
 
+            mixer.inputs.area_ratio                 = 1/ram_bypass
             mixer(conditions)
             
 #            

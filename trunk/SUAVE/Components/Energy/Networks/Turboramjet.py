@@ -164,7 +164,8 @@ class Turboramjet(Propulsor):
         # ram_bypass = 1 for Mo = min Mach for ramjet
         # ram_bypass = 0 for Mo = max Mach for turbojet
         ram_bypass = 1/(ramjet_mach - turbojet_mach) * (Mo - turbojet_mach)
-        
+        ram_bypass[i_tj] = 0.01
+        ram_bypass[i_rj] = 1.00
             
         #----------------------
         # TURBOJET OPERATION
@@ -250,25 +251,15 @@ class Turboramjet(Propulsor):
         mixer.inputs.mach                       = inlet_nozzle.outputs.mach_number
         mixer.inputs.stagnation_temperature_2   = low_pressure_turbine.outputs.stagnation_temperature
         mixer.inputs.stagnation_pressure_2      = low_pressure_turbine.outputs.stagnation_pressure
-
+        mixer.inputs.area_ratio                 = 1/ram_bypass
+    
+    
         mixer(conditions)
 
         mixed_temperature[i_mx] = mixer.outputs.stagnation_temperature[i_mx]
         mixed_pressure[i_mx]    = mixer.outputs.stagnation_pressure[i_mx]
         mach_number[i_mx]       = mixer.outputs.mach_number[i_mx]
-        
-        print 'Temperature'
-        print 'INLET', mixer.inputs.stagnation_temperature[i_mx]
-        print 'PRESS', mixer.inputs.stagnation_temperature_2[i_mx]
-        print 'OUT  ', mixed_temperature[i_mx]
-        print ''
-        print 'Pressure'
-        print 'INLET', mixer.inputs.stagnation_pressure[i_mx]
-        print 'PRESS', mixer.inputs.stagnation_pressure_2[i_mx]
-        print 'OUT  ', mixed_pressure[i_mx]
-        print '----------------------------'
-        print 'MACH ', mach_number[i_mx], mach_number[7]
-        
+
         
         #-- link the combustor to the correct stagnation properties
         combustor_2.inputs.stagnation_temperature   = mixed_temperature
@@ -292,6 +283,26 @@ class Turboramjet(Propulsor):
         #-- Corrected fuel-to-air ratios of both combustors
         combustor.outputs.fuel_to_air_ratio     = final_f1
         combustor_2.outputs.fuel_to_air_ratio   = final_f2
+
+        np.set_printoptions(threshold=np.inf)
+        print '=====>COMBUSTOR 1'
+        print 'TT3', combustor.inputs.stagnation_temperature[i_mx]
+        print 'TT4', combustor.outputs.stagnation_temperature[i_mx]
+        print '=====> COMBUSTOR2 '
+        
+        print 'MACH ', mixer.outputs.mach_number[i_mx]
+
+
+        print 'TT3', combustor_2.inputs.stagnation_temperature[i_mx]
+        print 'TT4', combustor_2.outputs.stagnation_temperature[i_mx]
+
+        print '================================>final f'
+#        print '=> TJ:', combustor.outputs.fuel_to_air_ratio[i_tj] + combustor_2.outputs.fuel_to_air_ratio[i_tj]
+#        print '1 : ', combustor.outputs.fuel_to_air_ratio[i_tj], '2 : ', combustor_2.outputs.fuel_to_air_ratio[i_tj]
+        print '=> MX:', combustor.outputs.fuel_to_air_ratio[i_mx] + combustor_2.outputs.fuel_to_air_ratio[i_mx]
+        print '1 : ', combustor.outputs.fuel_to_air_ratio[i_mx], '2 : ', combustor_2.outputs.fuel_to_air_ratio[i_mx]
+        print '=> RJ:', combustor.outputs.fuel_to_air_ratio[i_rj] + combustor_2.outputs.fuel_to_air_ratio[i_rj]
+        print '1 : ', combustor.outputs.fuel_to_air_ratio[i_rj], '2 : ', combustor_2.outputs.fuel_to_air_ratio[i_rj]
 
         # Nozzle
         #-- Turbojet operation
@@ -488,6 +499,8 @@ class Turboramjet(Propulsor):
         # ram_bypass = 1 for Mo = min Mach for ramjet
         # ram_bypass = 0 for Mo = max Mach for turbojet
         ram_bypass = 1/(ramjet_mach - turbojet_mach) * (Mo - turbojet_mach)
+        ram_bypass[i_tj] = 0.01
+        ram_bypass[i_rj] = 1.00
     
         #----------------------
         # TURBOJET-ONLY OPERATION
