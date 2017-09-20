@@ -162,9 +162,6 @@ class Combustor(Energy_Component):
             # --Rayleigh limitations define Tt4
             Tt4[i_low] = Tt4_ray[i_low]
             
-            print 'Tt4 i high', Tt4[i_high]
-            print 'Tt4 ray   ', Tt4_ray[i_high]
-            
             #Rayleigh calculations
             M_out[i_rayleigh], Ptr[i_rayleigh] = rayleigh(gamma,Mach[i_rayleigh],Tt4[i_rayleigh]/Tt_in[i_rayleigh])
             Pt_out     = Ptr*Pt_in

@@ -70,6 +70,7 @@ def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_is
     inlet_nozzle              = turboramjet.inlet_nozzle
     combustor_2               = turboramjet.combustor_2
     core_nozzle               = turboramjet.core_nozzle
+    mixer                     = turboramjet.mixer
 
         
     #-- turbojet-only components
@@ -202,12 +203,22 @@ def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_is
         #-- Dual mode operation
         if i_mx:
             # mixing properties, assuming same pressure
-            mixed_temperature = ram_bypass*inlet_nozzle.outputs.stagnation_temperature + (1-ram_bypass)*low_pressure_turbine.outputs.stagnation_temperature
-            mixed_pressure    = low_pressure_turbine.outputs.stagnation_pressure
+            
+            mixer.inputs.stagnation_temperature     = inlet_nozzle.outputs.stagnation_temperature
+            mixer.inputs.stagnation_pressure        = inlet_nozzle.outputs.stagnation_pressure
+            mixer.inputs.mach                       = inlet_nozzle.outputs.mach_number
+            mixer.inputs.stagnation_temperature_2   = low_pressure_turbine.outputs.stagnation_temperature
+            mixer.inputs.stagnation_pressure_2      = low_pressure_turbine.outputs.stagnation_pressure
+
+            mixer(conditions)
+            
+#            
+#            mixed_temperature = ram_bypass*inlet_nozzle.outputs.stagnation_temperature + (1-ram_bypass)*low_pressure_turbine.outputs.stagnation_temperature
+#            mixed_pressure    = low_pressure_turbine.outputs.stagnation_pressure
             
             # link the second combustor to the network
-            combustor_2.inputs.stagnation_temperature       = mixed_temperature
-            combustor_2.inputs.stagnation_pressure          = mixed_pressure
+            combustor_2.inputs.stagnation_temperature       = mixer.outputs.stagnation_temperature
+            combustor_2.inputs.stagnation_pressure          = mixer.outputs.stagnation_pressure
 
         # flow through combustor
         combustor_2(conditions)

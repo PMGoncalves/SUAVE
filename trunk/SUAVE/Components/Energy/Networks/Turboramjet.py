@@ -113,6 +113,7 @@ class Turboramjet(Propulsor):
         inlet_nozzle              = self.inlet_nozzle
         combustor_2               = self.combustor_2
         core_nozzle               = self.core_nozzle
+        mixer                     = self.mixer
 
         
         #-- Turbojet components
@@ -243,9 +244,31 @@ class Turboramjet(Propulsor):
         
 
         #-- Dual mode operation
-        mixed_temperature[i_mx] = ram_bypass[i_mx]*inlet_nozzle.outputs.stagnation_temperature[i_mx] + (1-ram_bypass[i_mx])*low_pressure_turbine.outputs.stagnation_temperature[i_mx]
-        mixed_pressure[i_mx]    = low_pressure_turbine.outputs.stagnation_pressure[i_mx]
-        mach_number[i_mx]       = inlet_nozzle.outputs.mach_number[i_mx]
+        
+        mixer.inputs.stagnation_temperature     = inlet_nozzle.outputs.stagnation_temperature
+        mixer.inputs.stagnation_pressure        = inlet_nozzle.outputs.stagnation_pressure
+        mixer.inputs.mach                       = inlet_nozzle.outputs.mach_number
+        mixer.inputs.stagnation_temperature_2   = low_pressure_turbine.outputs.stagnation_temperature
+        mixer.inputs.stagnation_pressure_2      = low_pressure_turbine.outputs.stagnation_pressure
+
+        mixer(conditions)
+
+        mixed_temperature[i_mx] = mixer.outputs.stagnation_temperature[i_mx]
+        mixed_pressure[i_mx]    = mixer.outputs.stagnation_pressure[i_mx]
+        mach_number[i_mx]       = mixer.outputs.mach_number[i_mx]
+        
+        print 'Temperature'
+        print 'INLET', mixer.inputs.stagnation_temperature[i_mx]
+        print 'PRESS', mixer.inputs.stagnation_temperature_2[i_mx]
+        print 'OUT  ', mixed_temperature[i_mx]
+        print ''
+        print 'Pressure'
+        print 'INLET', mixer.inputs.stagnation_pressure[i_mx]
+        print 'PRESS', mixer.inputs.stagnation_pressure_2[i_mx]
+        print 'OUT  ', mixed_pressure[i_mx]
+        print '----------------------------'
+        print 'MACH ', mach_number[i_mx], mach_number[7]
+        
         
         #-- link the combustor to the correct stagnation properties
         combustor_2.inputs.stagnation_temperature   = mixed_temperature
@@ -269,7 +292,7 @@ class Turboramjet(Propulsor):
         #-- Corrected fuel-to-air ratios of both combustors
         combustor.outputs.fuel_to_air_ratio     = final_f1
         combustor_2.outputs.fuel_to_air_ratio   = final_f2
-        print'Combustor', combustor_2.outputs.stagnation_temperature
+
         # Nozzle
         #-- Turbojet operation
         mixed_temperature[i_tj] = low_pressure_turbine.outputs.stagnation_temperature[i_tj] 
@@ -417,6 +440,7 @@ class Turboramjet(Propulsor):
         inlet_nozzle              = self.inlet_nozzle
         combustor_2               = self.combustor
         core_nozzle               = self.core_nozzle
+        mixer                     = self.mixer
 
         
         #-- Turbojet components
@@ -541,12 +565,16 @@ class Turboramjet(Propulsor):
             #-- Dual mode operation
             if i_mx:
                 # mixing properties, assuming same pressure
-                mixed_temperature = ram_bypass*inlet_nozzle.outputs.stagnation_temperature + (1-ram_bypass)*low_pressure_turbine.outputs.stagnation_temperature
-                mixed_pressure    = low_pressure_turbine.outputs.stagnation_pressure
-                
+                mixer.inputs.stagnation_temperature     = inlet_nozzle.outputs.stagnation_temperature
+                mixer.inputs.stagnation_pressure        = inlet_nozzle.outputs.stagnation_pressure
+                mixer.inputs.mach                       = inlet_nozzle.outputs.mach_number
+                mixer.inputs.stagnation_temperature_2   = low_pressure_turbine.outputs.stagnation_temperature
+                mixer.inputs.stagnation_pressure_2      = low_pressure_turbine.outputs.stagnation_pressure
+
+                mixer(conditions)                
                 # link the second combustor to the network
-                combustor_2.inputs.stagnation_temperature       = mixed_temperature
-                combustor_2.inputs.stagnation_pressure          = mixed_pressure
+                combustor_2.inputs.stagnation_temperature       = mixer.outputs.stagnation_temperature
+                combustor_2.inputs.stagnation_pressure          = mixer.outputs.stagnation_pressure
     
             # flow through combustor
             combustor_2(conditions)

@@ -191,7 +191,10 @@ class Thrust(Energy_Component):
         fuel_flow_rate   = np.fmax(0.1019715*FD2*TSFC/3600,a) #use units package for the constants
         #computing the power 
         power            = FD2*u0
-        
+        np.set_printoptions(threshold=np.inf)
+        print 'core_nozzle', core_nozzle.velocity/u0
+        print 'core_pressure', mdot_core
+
         #pack outputs
         
         self.outputs.thrust                            = FD2 

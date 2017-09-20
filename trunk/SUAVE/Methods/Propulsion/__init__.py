@@ -13,5 +13,6 @@ from fm_id import fm_id
 from fm_solver import fm_solver
 from rayleigh import rayleigh
 from turboramjet_sizing import turboramjet_sizing
+from mixing_equation import mixing_equation
 from nozzle_calculations import exit_Mach_shock, mach_area, normal_shock, pressure_ratio_isentropic, pressure_ratio_shock_in_nozzle
 import electric_motor_sizing
