@@ -228,6 +228,8 @@ class Turboramjet(Propulsor):
         mach_number         = 0.1*Mo/Mo
         ram_bypass          = ram_bypass*Mo/Mo
         
+        ram_bypass[i_tj] = 0.0
+        ram_bypass[i_rj] = 1.0
         # Combustor
         #-- Turbojet operation
         mixed_temperature[i_tj] = low_pressure_turbine.outputs.stagnation_temperature[i_tj] 
