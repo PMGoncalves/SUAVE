@@ -79,33 +79,39 @@ class Heat_Exchanger(Energy_Component):
 
         Source:
         https://web.stanford.edu/~cantwell/AA283_Course_Material/AA283_Course_Notes/
+        https://arc.aiaa.org/doi/abs/10.2514/6.IAC-06-D2.P.2.07
         
 
         Inputs:
+        
+        
         conditions.freestream.
-          isentropic_expansion_factor         [-]
-          specific_heat_at_constant_pressure  [J/(kg K)]
-          pressure                            [Pa]
-          universal_gas_constant              [J/(kg K)] (this is misnamed - actually refers to the gas specific constant)
+          specific_heat_at_constant_pressure    [J/(kg K)]
+        
         self.inputs.
-          stagnation_temperature              [K]
-          stagnation_pressure                 [Pa]
-
+          self.inputs.stagnation_temperature_A  [K]
+          self.inputs.stagnation_temperature_B  [K]
+          self.inputs.stagnation_pressure_A     [Pa]
+          self.inputs.stagnation_pressure_B     [Pa]
+          
         Outputs:
         self.outputs.
-          stagnation_temperature              [K]  
-          stagnation_pressure                 [Pa]
-          stagnation_enthalpy                 [J/kg]
-          mach_number                         [-]
-          static_temperature                  [K]
-          static_enthalpy                     [J/kg]
-          velocity                            [m/s]
+          stagnation_temperature                [K]  
+          stagnation_pressure                   [Pa]
+          stagnation_enthalpy                   [J/kg]
+          mach_number                           [-]
+          static_temperature                    [K]
+          static_enthalpy                       [J/kg]
+          velocity                              [m/s]
 
         Properties Used:
         self.
-          pressure_ratio                      [-]
-          polytropic_efficiency               [-]
-        """           
+          pressure_ratio_A                      [-]
+          pressure_ratio_B                      [-]
+          efficiency                            [-]
+          heat_capacity_ratio                   [-]
+        """  
+
         #unpack the values
         
         #unpack from conditions
