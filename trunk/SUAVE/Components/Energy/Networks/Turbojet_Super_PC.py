@@ -12,6 +12,7 @@
 import SUAVE
 
 from SUAVE.Core import Data, Units
+import numpy as np
 from SUAVE.Components.Propulsors.Propulsor import Propulsor
 
 # ----------------------------------------------------------------------
@@ -93,6 +94,10 @@ class Turbojet_Super_PC(Propulsor):
 
         #Unpack
         conditions = state.conditions
+    
+        #Unpack from freestream
+        Mo       = conditions.freestream.mach_number
+
         
         ram                       = self.ram
         inlet_nozzle              = self.inlet_nozzle
@@ -104,7 +109,8 @@ class Turbojet_Super_PC(Propulsor):
         low_pressure_turbine      = self.low_pressure_turbine
         core_nozzle               = self.core_nozzle
         thrust                    = self.thrust
-        number_of_engines         = self.number_of_engines        
+        number_of_engines         = self.number_of_engines      
+        
         
         #Creating the network by manually linking the different components
         
@@ -121,22 +127,31 @@ class Turbojet_Super_PC(Propulsor):
         #Flow through the inlet nozzle
         inlet_nozzle(conditions)
         
+    
         
         #link heat exchanger to nozzle
         heat_exchanger.inputs.stagnation_temperature_A            = inlet_nozzle.outputs.stagnation_temperature 
         heat_exchanger.inputs.stagnation_pressure_A               = inlet_nozzle.outputs.stagnation_pressure
-        heat_exchanger.inputs.stagnation_temperature_B            = 35.
-        heat_exchanger.inputs.stagnation_pressure_B               = 1.
+        heat_exchanger.inputs.stagnation_temperature_B            = 35. * inlet_nozzle.outputs.stagnation_temperature / inlet_nozzle.outputs.stagnation_temperature 
+        heat_exchanger.inputs.stagnation_pressure_B               = 1.0e5 *inlet_nozzle.outputs.stagnation_pressure / inlet_nozzle.outputs.stagnation_pressure
         
         #Flow through the heat exchanger
         heat_exchanger(conditions)
+        
+        # Condition for heat exchanger use
+        i_heat = Mo > 2.5
+        i_cold = Mo <= 2.5
+        
+        # Initialize arrays
+        temperature_vector = inlet_nozzle.outputs.stagnation_temperature * inlet_nozzle.outputs.stagnation_temperature/inlet_nozzle.outputs.stagnation_temperature
+        pressure_vector    = inlet_nozzle.outputs.stagnation_pressure * inlet_nozzle.outputs.stagnation_pressure/inlet_nozzle.outputs.stagnation_pressure
+        
+        temperature_vector[i_heat] = heat_exchanger.outputs.stagnation_temperature_A[i_heat]
+        pressure_vector[i_heat]    = heat_exchanger.outputs.stagnation_pressure_A[i_heat]
 
-        print 'new f', heat_exchanger.outputs.refrigerant_to_air_ratio
-        print 'new T', heat_exchanger.outputs.stagnation_temperature_A
-          
         #--link low pressure compressor to the inlet nozzle
-        low_pressure_compressor.inputs.stagnation_temperature  = heat_exchanger.outputs.stagnation_temperature_A
-        low_pressure_compressor.inputs.stagnation_pressure     = heat_exchanger.outputs.stagnation_pressure_A
+        low_pressure_compressor.inputs.stagnation_temperature  = temperature_vector
+        low_pressure_compressor.inputs.stagnation_pressure     = pressure_vector
         
         #Flow through the low pressure compressor
         low_pressure_compressor(conditions)
@@ -154,7 +169,7 @@ class Turbojet_Super_PC(Propulsor):
         
         #flow through the high pressor comprresor
         combustor(conditions)
-        print 'old f', combustor.outputs.fuel_to_air_ratio
+        
         #link the high pressure turbine to the combustor
         high_pressure_turbine.inputs.stagnation_temperature    = combustor.outputs.stagnation_temperature
         high_pressure_turbine.inputs.stagnation_pressure       = combustor.outputs.stagnation_pressure
@@ -187,7 +202,7 @@ class Turbojet_Super_PC(Propulsor):
         core_nozzle.inputs.stagnation_pressure                 = low_pressure_turbine.outputs.stagnation_pressure
         
         #flow through the core nozzle
-        core_nozzle(conditions)
+        core_nozzle.compute_limited_geometry(conditions)
 
         # compute the thrust using the thrust component
         #link the thrust component to the core nozzle
@@ -195,8 +210,15 @@ class Turbojet_Super_PC(Propulsor):
         thrust.inputs.core_area_ratio                          = core_nozzle.outputs.area_ratio
         thrust.inputs.core_nozzle                              = core_nozzle.outputs
 	
+ 
+        # Determine maximum fuel_to_air between heat exchanger and the combustor
+        real_fuel_to_air_ratio      = combustor.outputs.fuel_to_air_ratio * combustor.outputs.fuel_to_air_ratio/combustor.outputs.fuel_to_air_ratio
+        real_fuel_to_air_ratio[i_heat] =  np.fmax(heat_exchanger.outputs.refrigerant_to_air_ratio,combustor.outputs.fuel_to_air_ratio)[i_heat]
         #link the thrust component to the combustor
-        thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio
+        thrust.inputs.fuel_to_air_ratio                        = real_fuel_to_air_ratio
+        
+        print 'cold :', real_fuel_to_air_ratio[i_cold]
+        print 'hot  :', real_fuel_to_air_ratio[i_heat]
 	
         #link the thrust component to the low pressure compressor 
         thrust.inputs.stag_temp_lpt_exit                       = low_pressure_compressor.outputs.stagnation_temperature
@@ -216,10 +238,14 @@ class Turbojet_Super_PC(Propulsor):
         F_vec        = conditions.ones_row(3) * 0.0
         F_vec[:,0]   = F[:,0]
         F            = F_vec
+        A            = thrust.outputs.area_ratio
+        P            = thrust.outputs.pressure
 
         results = Data()
         results.thrust_force_vector = F
         results.vehicle_mass_rate   = mdot
+        results.area_ratio          = A
+        results.pressure            = P
         
         return results
     
@@ -301,7 +327,7 @@ class Turbojet_Super_PC(Propulsor):
         core_nozzle.inputs.stagnation_pressure                 = low_pressure_turbine.outputs.stagnation_pressure
         
         #flow through the core nozzle
-        core_nozzle(conditions)
+        core_nozzle.compute_limited_geometry(conditions)
         
         # compute the thrust using the thrust component
         #link the thrust component to the core nozzle

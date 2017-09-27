@@ -61,7 +61,7 @@ class Heat_Exchanger(Energy_Component):
         self.inputs.stagnation_temperature_B = 0.
         self.inputs.stagnation_pressure_B    = 35.
         self.refrigerant_data                = Data()
-        self.heat_capacity                   = 1.
+        self.heat_capacity_ratio             = 1.
 
 
     
@@ -74,9 +74,12 @@ class Heat_Exchanger(Energy_Component):
         Efficiency based on delta T parameter:
             100% efficiency => delta T = 0.
             0%   efficiency => delta T = Tt_out - Tt_in
+            
+        Liquid H2 used for refrigerant (seen in value for Cp)
 
         Source:
         https://web.stanford.edu/~cantwell/AA283_Course_Material/AA283_Course_Notes/
+        
 
         Inputs:
         conditions.freestream.
@@ -118,7 +121,7 @@ class Heat_Exchanger(Energy_Component):
         #unpack from self
         pid_A                   =  self.pressure_ratio_A
         pid_B                   =  self.pressure_ratio_B
-        K                       =  self.heat_capacity
+        K                       =  self.heat_capacity_ratio
         eta                     =  self.efficiency
     
         # Method to compute the output variables
@@ -130,7 +133,6 @@ class Heat_Exchanger(Energy_Component):
         #----Initialize array
         TtH_in  = 1.0*TtA_in/TtA_in
         TtC_in  = 1.0*TtA_in/TtA_in
-        TtB_in  = TtB_in*TtA_in/TtA_in
         
         #----Determine conditions
         i_hot   = TtA_in > TtB_in
@@ -155,7 +157,7 @@ class Heat_Exchanger(Energy_Component):
         TtA_out = TtH_out
         TtB_out = TtC_out
         
-        CpB = 20645.1108
+        CpB = 34283.28
         CpA = Cp
         
         f       = K*CpA/CpB
