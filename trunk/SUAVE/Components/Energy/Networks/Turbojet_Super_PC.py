@@ -21,7 +21,7 @@ from SUAVE.Components.Propulsors.Propulsor import Propulsor
 
 ## @ingroup Components-Energy-Networks
 class Turbojet_Super_PC(Propulsor):
-    """ This is a turbojet for supersonic flight.
+    """ This is a precooled turbojet engine for supersonic flight
 
         Assumptions:
         None
@@ -29,6 +29,7 @@ class Turbojet_Super_PC(Propulsor):
         Source:
         Most of the componentes come from this book:
         https://web.stanford.edu/~cantwell/AA283_Course_Material/AA283_Course_Notes/
+        https://arc.aiaa.org/doi/abs/10.2514/6.IAC-06-D2.P.2.07
     """      
     
     def __defaults__(self):
