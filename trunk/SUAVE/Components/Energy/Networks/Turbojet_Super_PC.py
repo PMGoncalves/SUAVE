@@ -140,7 +140,6 @@ class Turbojet_Super_PC(Propulsor):
         
         # Condition for heat exchanger use
         i_heat = Mo > 2.5
-        i_cold = Mo <= 2.5
         
         # Initialize arrays
         temperature_vector = inlet_nozzle.outputs.stagnation_temperature * inlet_nozzle.outputs.stagnation_temperature/inlet_nozzle.outputs.stagnation_temperature
@@ -217,9 +216,6 @@ class Turbojet_Super_PC(Propulsor):
         #link the thrust component to the combustor
         thrust.inputs.fuel_to_air_ratio                        = real_fuel_to_air_ratio
         
-        print 'cold :', real_fuel_to_air_ratio[i_cold]
-        print 'hot  :', real_fuel_to_air_ratio[i_heat]
-	
         #link the thrust component to the low pressure compressor 
         thrust.inputs.stag_temp_lpt_exit                       = low_pressure_compressor.outputs.stagnation_temperature
         thrust.inputs.stag_press_lpt_exit                      = low_pressure_compressor.outputs.stagnation_pressure
