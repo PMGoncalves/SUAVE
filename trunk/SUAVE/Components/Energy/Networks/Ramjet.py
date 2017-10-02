@@ -120,6 +120,7 @@ class Ramjet(Propulsor):
         combustor.inputs.stagnation_pressure                   = inlet_nozzle.outputs.stagnation_pressure
         combustor.inputs.mach_number                           = inlet_nozzle.outputs.mach_number
         
+        hello = inlet_nozzle.outputs.mach_number*inlet_nozzle.outputs.mach_number/inlet_nozzle.outputs.mach_number
         #flow through the high pressor comprresor
         combustor.compute_rayleigh(conditions)
         
@@ -162,6 +163,38 @@ class Ramjet(Propulsor):
         results = Data()
         results.thrust_force_vector = F
         results.vehicle_mass_rate   = mdot
+        
+        #More outputs
+        
+        results.tto = conditions.freestream.stagnation_temperature
+        results.tt1 = inlet_nozzle.outputs.stagnation_temperature
+        results.tt2 = combustor.outputs.stagnation_temperature
+        results.tt3 = core_nozzle.outputs.stagnation_temperature
+        
+        results.pto = conditions.freestream.stagnation_pressure
+        results.pt1 = inlet_nozzle.outputs.stagnation_pressure
+        results.pt2 = combustor.outputs.stagnation_pressure
+        results.pt3 = core_nozzle.outputs.stagnation_pressure
+        
+        results.po  = conditions.freestream.pressure
+        results.p1  = inlet_nozzle.outputs.stagnation_pressure*(1+(1.4-1)/2.*inlet_nozzle.outputs.mach_number**2)**(-1.4/(1.4-1))
+        results.p2  = combustor.outputs.stagnation_pressure*(1+(1.4-1)/2.*combustor.outputs.mach_number**2)**(-1.4/(1.4-1))
+        results.p3  = core_nozzle.outputs.stagnation_pressure*(1+(1.4-1)/2.*core_nozzle.outputs.mach_number**2)**(-1.4/(1.4-1))
+        
+        results.mo = conditions.freestream.mach_number
+        results.m11 = hello
+        results.m1 = inlet_nozzle.outputs.mach_number
+        results.m2 = combustor.outputs.mach_number
+        results.m3 = core_nozzle.outputs.mach_number
+        
+        results.fsp = conditions.freestream.speed_of_sound*thrust.outputs.non_dimensional_thrust
+        results.isp = Isp
+        results.f = combustor.outputs.fuel_to_air_ratio
+        
+        
+        results.no = results.fsp*conditions.freestream.velocity/(results.f*combustor.fuel_data.specific_energy)
+
+
         
         return results
     

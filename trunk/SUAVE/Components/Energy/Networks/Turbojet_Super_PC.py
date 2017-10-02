@@ -235,14 +235,53 @@ class Turbojet_Super_PC(Propulsor):
         F_vec        = conditions.ones_row(3) * 0.0
         F_vec[:,0]   = F[:,0]
         F            = F_vec
-        A            = thrust.outputs.area_ratio
-        P            = thrust.outputs.pressure
+#        A            = thrust.outputs.area_ratio
+#        P            = thrust.outputs.pressure
 
         results = Data()
         results.thrust_force_vector = F
         results.vehicle_mass_rate   = mdot
-        results.area_ratio          = A
-        results.pressure            = P
+#        results.area_ratio          = A
+#        results.pressure            = P
+        
+        results.tto = conditions.freestream.stagnation_temperature
+        results.tt1 = inlet_nozzle.outputs.stagnation_temperature
+        results.tt2 = heat_exchanger.outputs.stagnation_temperature_A
+        results.tt3 = low_pressure_compressor.outputs.stagnation_temperature
+        results.tt4 = high_pressure_compressor.outputs.stagnation_temperature
+        results.tt5 = combustor.outputs.stagnation_temperature
+        results.tt6 = high_pressure_turbine.outputs.stagnation_temperature
+        results.tt7 = low_pressure_turbine.outputs.stagnation_temperature
+        results.tt8 = core_nozzle.outputs.stagnation_temperature
+
+        results.pto = conditions.freestream.stagnation_pressure
+        results.pt1 = inlet_nozzle.outputs.stagnation_pressure
+        results.pt2 = heat_exchanger.outputs.stagnation_pressure_A
+        results.pt3 = low_pressure_compressor.outputs.stagnation_pressure
+        results.pt4 = high_pressure_compressor.outputs.stagnation_pressure
+        results.pt5 = combustor.outputs.stagnation_pressure
+        results.pt6 = high_pressure_turbine.outputs.stagnation_pressure
+        results.pt7 = low_pressure_turbine.outputs.stagnation_pressure
+        results.pt8 = core_nozzle.outputs.stagnation_pressure
+        
+#        results.po  = conditions.freestream.pressure
+#        results.p1  = inlet_nozzle.outputs.stagnation_pressure*(1+(1.4-1)/2.*inlet_nozzle.outputs.mach_number**2)**(-1.4/(1.4-1))
+#        results.p2  = combustor.outputs.stagnation_pressure*(1+(1.4-1)/2.*combustor.outputs.mach_number**2)**(-1.4/(1.4-1))
+#        results.p3  = core_nozzle.outputs.stagnation_pressure*(1+(1.4-1)/2.*core_nozzle.outputs.mach_number**2)**(-1.4/(1.4-1))
+        
+#        results.mo = conditions.freestream.mach_number
+#        results.m11 = hello
+#        results.m1 = inlet_nozzle.outputs.mach_number
+#        results.m2 = combustor.outputs.mach_number
+#        results.m3 = core_nozzle.outputs.mach_number
+        
+        results.fsp = conditions.freestream.speed_of_sound*thrust.outputs.non_dimensional_thrust
+        results.isp = Isp
+        results.f = real_fuel_to_air_ratio
+        
+        
+        results.no = results.fsp*conditions.freestream.velocity/(results.f*combustor.fuel_data.specific_energy)
+
         
         return results
     
