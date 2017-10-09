@@ -167,6 +167,7 @@ class Compression_Nozzle(Energy_Component):
         self.outputs.static_temperature      = T_out
         self.outputs.static_enthalpy         = h_out
         self.outputs.velocity                = u_out
+        self.outputs.static_pressure         = P_out
     
 
     __call__ = compute

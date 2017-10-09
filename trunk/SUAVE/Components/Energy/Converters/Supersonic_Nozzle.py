@@ -150,6 +150,9 @@ class Supersonic_Nozzle(Energy_Component):
         #initializing the Pout array
         P_out         = 1.0 *Mach/Mach
         
+        print 'GAMMA', gamma
+        print 'CP', Cp
+        
         #Computing output pressure and Mach number for the case Mach <1.0
         P_out[i_low]  = Po[i_low]
         Mach[i_low]   = np.sqrt((((Pt_out[i_low]/Po[i_low])**((gamma-1)/gamma))-1)*2/(gamma-1))

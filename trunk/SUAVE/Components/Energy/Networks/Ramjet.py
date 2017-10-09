@@ -163,6 +163,31 @@ class Ramjet(Propulsor):
         results.thrust_force_vector = F
         results.vehicle_mass_rate   = mdot
         
+        results.pt0 = inlet_nozzle.inputs.stagnation_pressure
+        results.tt0 = inlet_nozzle.inputs.stagnation_temperature
+        results.m0  = conditions.freestream.mach_number
+        results.p0  = conditions.freestream.pressure
+
+        results.pt1 = inlet_nozzle.outputs.stagnation_pressure
+        results.tt1 = inlet_nozzle.outputs.stagnation_temperature
+        results.m1  = inlet_nozzle.outputs.mach_number
+        results.p1  = inlet_nozzle.outputs.static_pressure
+        
+        results.pt2 = combustor.outputs.stagnation_pressure
+        results.tt2 = combustor.outputs.stagnation_temperature
+        results.m2  = combustor.outputs.mach_number
+        results.p2  = combustor.outputs.stagnation_pressure*(1+(1.4-1)/2*combustor.outputs.mach_number**2)**(-1.4/(1.4-1))
+         
+        results.pt3 = core_nozzle.outputs.stagnation_pressure
+        results.tt3 = core_nozzle.outputs.stagnation_temperature
+        results.m3  = core_nozzle.outputs.mach_number
+        results.p3  = core_nozzle.outputs.static_pressure
+        
+        results.fsp = thrust.outputs.non_dimensional_thrust*conditions.freestream.speed_of_sound
+        results.isp = thrust.outputs.specific_impulse
+        results.f   = combustor.outputs.fuel_to_air_ratio
+        results.no  = results.fsp * conditions.freestream.velocity / (results.f * combustor.fuel_data.specific_energy )
+       
         return results
     
     def size(self,state):  
