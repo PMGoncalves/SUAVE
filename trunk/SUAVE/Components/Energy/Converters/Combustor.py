@@ -323,17 +323,18 @@ class Combustor(Energy_Component):
         CfAwA3 = self.burner_drag_coefficient
         Tref   = self.temperature_reference
         hf     = self.hf
-        Cpb    = self.specific_heat_constant_pressure
         
-        # New flow properties
-        Cpb    = 1510.
-        gamma  = 1.238
+        # New flow properties --not computed, these values should change considerably
+        Cpb    = conditions.freestream.specific_heat_at_constant_pressure
+        gamma  = conditions.freestream.isentropic_expansion_factor 
         
         
         # Calculate input properties
         T_in   = nozzle.static_temperature
         V_in   = nozzle.velocity
         P_in   = nozzle.static_pressure
+        
+        np.set_printoptions(threshold=np.nan)
         
         
         #-- Find suitable fuel-to-air ratio     
@@ -344,10 +345,49 @@ class Combustor(Energy_Component):
         M4  = V4/np.sqrt(gamma*R*T4)
         Tt  = T4*(1+(gamma-1)/2*M4**2)
         
+        
+        #-- Initialize array
+        f  = 0.001*Pt_in/Pt_in
+
+        V_out = 0.0*Pt_in/Pt_in
+        T_out = 0.0*Pt_in/Pt_in
+        M_out = 0.0*Pt_in/Pt_in
+        Tt_out = 0.0*Pt_in/Pt_in
+        f_out = 0.0*Pt_in/Pt_in
+        
+        
+        i = 0
+        
+        while i < 100 : 
+            V4  = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
+            T4  = (T_in/(1+f))*(1+(1/(Cpb*T_in))*(eta_b*f*htf+f*hf+f*Cpb*Tref+(1+f*(Vf_V3)**2)*V_in**2/2))-V4**2/(2*Cpb)   
+            M4  = V4/np.sqrt(gamma*R*T4)
+            Tt  = T4*(1+(gamma-1)/2*M4**2)
+
+            i_max = Tt > 2400.
+            i_min = Tt <= 2200.
+            
+            i_mach = M4 >= 1.0
+            i_not  = M4 < 1.0
+            
+            i_limit = np.logical_and(i_min,i_mach)
+            V_out[i_limit]  = V4[i_limit]
+            T_out[i_limit]  = T4[i_limit]
+            M_out[i_limit]  = M4[i_limit]
+            Tt_out[i_limit] = Tt[i_limit] 
+            f_out[i_limit]  = f[i_limit]
+            
+            f = f + 0.0005
+            i = i + 1
+            
+            print 'i ', i, 'f', f[-1]
+            
         print '++++++++++++++++++++++++++++++++++++++'
-        print 'COMBUSTOR '
-        print 'f : ', f
-        print 'u: ', V4, 'T : ', T4, 'M : ', M4, 'Tt4', Tt
+        print 'COMBUSTOR 2 '
+        print 'f : ', f_out
+        print 'u: ', V_out, 'T : ', T_out, 'M : ', M_out, 'Tt4', Tt_out   
+        print '++++++++++++++++++++++++++++++++++++++'
+        print '++++++++++++++++++++++++++++++++++++++'
 
 
         # Computing the exit static and stagnation conditions
@@ -357,14 +397,14 @@ class Combustor(Energy_Component):
 
         
         # pack computed quantities into outputs
-        self.outputs.stagnation_temperature  = Tt
+        self.outputs.stagnation_temperature  = Tt_out
         self.outputs.stagnation_pressure     = Pt_out
         self.outputs.stagnation_enthalpy     = ht_out
-        self.outputs.fuel_to_air_ratio       = f 
-        self.outputs.static_temperature      = T4
+        self.outputs.fuel_to_air_ratio       = f_out
+        self.outputs.static_temperature      = T_out
         self.outputs.static_pressure         = P_out
-        self.outputs.velocity                = V4
-        self.outputs.mach_number             = M4
+        self.outputs.velocity                = V_out
+        self.outputs.mach_number             = M_out
 
     
     __call__ = compute

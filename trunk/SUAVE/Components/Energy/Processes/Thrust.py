@@ -300,20 +300,12 @@ class Thrust(Energy_Component):
     
         Fsp      = ((1+f)*Sa_exit - Sa0 - R*T0/u0*(core_area_ratio-1))/a0
         
-        print '++++++++++++++++++++++++++++++++++++++'
-        print 'THRUST '
-        print 'Fsp: ', Fsp, 'Sa0 : ', Sa0, 'Sa10 : ', Sa_exit
-
         #Computing the specific impulse
-        #Isp              = Fsp*a0*(1+bypass_ratio)/(f*g)
+        Isp              = Fsp*a0*(1+bypass_ratio)/(f*g)
         
         #Computing the TSFC
         TSFC             = f/(Fsp*a0)
         #3600.*f*g/(Fsp*a0*(1+bypass_ratio))  
-        print 'tsfc: ', TSFC, 'Isp: ', Fsp*a0/(f*g)
-        print 'eta_0 : ', u0/(43.5e6*TSFC)
-        print 'eta_t : ', (((1+f)*core_exit_velocity**2/2)-u0**2/2)/(f*43.5e6)
-        print 'eta_p : ', (u0/(43.5e6*TSFC))/((((1+f)*core_exit_velocity**2/2)-u0**2/2)/(f*43.5e6))
     
         #computing the core mass flow
         mdot_core        = mdhc*np.sqrt(Tref/total_temperature_reference)*(total_pressure_reference/Pref)
@@ -337,6 +329,7 @@ class Thrust(Energy_Component):
         self.outputs.core_mass_flow_rate               = mdot_core
         self.outputs.fuel_flow_rate                    = fuel_flow_rate    
         self.outputs.power                             = power  
+        self.outputs.specific_impulse                  = Isp
         
     
     def size(self,conditions):

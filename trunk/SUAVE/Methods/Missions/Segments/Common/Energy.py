@@ -86,6 +86,8 @@ def update_thrust(segment,state):
     conditions.propulsion.m3 = results.m3
     conditions.propulsion.fsp = results.fsp
     conditions.propulsion.tsfc = results.tsfc
+    conditions.propulsion.isp  = results.isp
+    conditions.propulsion.no   = results.no
     conditions.propulsion.t0 = results.t0
     conditions.propulsion.t1 = results.t1
     conditions.propulsion.t2 = results.t2

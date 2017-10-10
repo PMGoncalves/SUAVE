@@ -167,8 +167,10 @@ class Scramjet(Propulsor):
         results.thrust_force_vector = F
         results.f = combustor.outputs.fuel_to_air_ratio
         results.vehicle_mass_rate   = mdot
-        results.fsp                 = thrust.outputs.non_dimensional_thrust
+        results.fsp                 = thrust.outputs.non_dimensional_thrust * conditions.freestream.speed_of_sound
         results.tsfc                = thrust.outputs.thrust_specific_fuel_consumption
+        results.isp                 = thrust.outputs.specific_impulse
+        results.no                  = results.fsp * conditions.freestream.velocity / (results.f * combustor.fuel_data.specific_energy)
         
         results.m1 = inlet_nozzle.outputs.mach_number
         results.m2 = combustor.outputs.mach_number

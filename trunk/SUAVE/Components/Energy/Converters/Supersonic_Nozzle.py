@@ -389,8 +389,11 @@ class Supersonic_Nozzle(Energy_Component):
         
         #unpack from self
         etapold  = self.efficiency
-        Cpe      = self.specific_heat_constant_pressure
-        g_e      = self.isentropic_expansion_factor  
+        pid      = self.pressure_ratio
+        
+        # these values change considerably after fuel addition at hypersonic speed
+        g_e      = conditions.freestream.isentropic_expansion_factor
+        Cpe      = conditions.freestream.specific_heat_at_constant_pressure
         
         P_out = Po
         
@@ -399,15 +402,12 @@ class Supersonic_Nozzle(Energy_Component):
         u_out   = np.sqrt(u_in**2+2*Cpe*(T_in-T_out))      
         A_ratio = (1+f)*(1/(P_out/Po))*(T_out/To)*(u_in/Vo)    
         M_out   = u_out/np.sqrt(g_e*R*T_out)
-        
-        print '++++++++++++++++++++++++++++++++++++++'
-        print 'NOZZLE '
-        print 'Area ', A_ratio
-        print 'u: ', u_out, 'T : ', T_out, 'M : ', M_out, 'Tt_out'
-        
+        Tt_out  = T_out * (1+(g_e-1)/2*M_out**2)
+        Pt_out  = Pt_in*pid
+
         #pack computed quantities into outputs
-        self.outputs.stagnation_temperature  = Tt_in
-        self.outputs.stagnation_pressure     = Pt_in
+        self.outputs.stagnation_temperature  = Tt_out
+        self.outputs.stagnation_pressure     = Pt_out
         self.outputs.temperature             = T_out
         self.outputs.pressure                = P_out
         self.outputs.velocity                = u_out

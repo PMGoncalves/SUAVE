@@ -234,24 +234,17 @@ class Compression_Nozzle(Energy_Component):
         #-- Compute inlet conditions, based on geometry and number of shocks 
         psi, Ptr    = inlet_conditions(Mo,gamma, ob_count, theta)
         
-        print 'PSI', psi
         
         #-- Compute output parameters
         T_out       = psi*To
         P_out       = Po*(psi/(psi*(1-etapold)+etapold))**(Cp/R)
         Pt_out      = Ptr*Pt_in
         Mach        = np.sqrt((2/(gamma-1))*((To/T_out)*(1+(gamma-1)/2*Mo**2)-1)) 
-        u_out       = np.sqrt(Vo**2-2*Cp*To*(psi-1))
+        u_out       = (np.sqrt(Vo**2-2*Cp*To*(psi-1)))
         h_out       = Cp*T_out
-        Tt_out      = Tt_in
+        Tt_out      = T_out * (1+(gamma-1)/2*Mach**2)
         ht_out      = Cp*Tt_out
-  
-        print '++++++++++++++++++++++++++++++++++++++'
-        print 'FREESTREAM '
-        print 'u ', Vo, 'T : ', To, 'M : ', Mo
-        print '++++++++++++++++++++++++++++++++++++++'
-        print 'INLET '
-        print 'u_out: ', u_out, 'T_out : ', T_out, 'M_out : ', Mach, 'Tt_out', Tt_out
+
           
         #pack computed quantities into outputs
         self.outputs.stagnation_temperature  = Tt_out
