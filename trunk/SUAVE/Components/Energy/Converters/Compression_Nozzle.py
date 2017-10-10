@@ -103,6 +103,7 @@ class Compression_Nozzle(Energy_Component):
         gamma   = conditions.freestream.isentropic_expansion_factor
         Cp      = conditions.freestream.specific_heat_at_constant_pressure
         Po      = conditions.freestream.pressure
+        To      = conditions.freestream.temperature
         Mo      = conditions.freestream.mach_number
         R       = conditions.freestream.universal_gas_constant
         
@@ -158,6 +159,9 @@ class Compression_Nozzle(Energy_Component):
         #-- Compute exit velocity and enthalpy
         h_out   = Cp*T_out
         u_out   = np.sqrt(2*(ht_out-h_out))
+        
+        print 'P_o', Po
+        print 'T_o', To
           
         #pack computed quantities into outputs
         self.outputs.stagnation_temperature  = Tt_out
