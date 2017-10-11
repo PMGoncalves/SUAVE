@@ -150,12 +150,16 @@ class Heat_Exchanger(Energy_Component):
         TtC_in[i_hot]   = TtB_in[i_hot]
         TtC_in[i_cold]  = TtA_in[i_cold]
         
-        #--Determine common output stagnation temperature
-        Tt_out = (TtH_in + TtC_in*K + dT*(K-1)) / (1+K)
+        TtH_out = TtC_in + dT
+        TtC_out = TtH_in - dT
         
-        #--Add dT to the final output stagnation temperatures of each flow
-        TtH_out = Tt_out + dT
-        TtC_out = Tt_out - dT
+        
+#        #--Determine common output stagnation temperature
+#        Tt_out = (TtH_in + TtC_in*K + dT*(K-1)) / (1+K)
+#        
+#        #--Add dT to the final output stagnation temperatures of each flow
+#        TtH_out = Tt_out + dT
+#        TtC_out = Tt_out - dT
         
         #--Compute final stagnation pressure
         PtA_out = PtA_in*pid_A
