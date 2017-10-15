@@ -16,7 +16,7 @@ from SUAVE.Core import Data
 # ----------------------------------------------------------------------
 
 def ramjet_sizing(ramjet,mach_number = None, altitude = None, delta_isa = 0, conditions = None):  
-    """ create and evaluate a gas turbine network
+    """ create and evaluate a ramjet etwork
     """    
     
     #Unpack components
@@ -90,7 +90,7 @@ def ramjet_sizing(ramjet,mach_number = None, altitude = None, delta_isa = 0, con
     combustor.inputs.mach_number                           = inlet_nozzle.outputs.mach_number
     
     #flow through the high pressor comprresor
-    combustor(conditions)
+    combustor.compute_rayleigh(conditions)
 
     
     #link the core nozzle to the low pressure turbine
@@ -160,8 +160,8 @@ def ramjet_sizing(ramjet,mach_number = None, altitude = None, delta_isa = 0, con
     # propulsion conditions
     conditions_sls.propulsion.throttle           =  np.atleast_1d(1.0)    
     
-    state_sls = Data()
-    state_sls.numerics = Data()
+    state_sls            = Data()
+    state_sls.numerics   = Data()
     state_sls.conditions = conditions_sls   
-    results_sls = ramjet.evaluate_thrust(state_sls)
+    results_sls          = ramjet.evaluate_thrust(state_sls)
     ramjet.sealevel_static_thrust = results_sls.thrust_force_vector[0,0] / number_of_engines

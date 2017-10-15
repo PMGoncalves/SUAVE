@@ -121,7 +121,7 @@ class Ramjet(Propulsor):
         combustor.inputs.mach_number                           = inlet_nozzle.outputs.mach_number
         
         #flow through the high pressor comprresor
-        combustor(conditions)
+        combustor.compute_rayleigh(conditions)
         
         
         #link the core nozzle to the low pressure turbine
@@ -129,7 +129,7 @@ class Ramjet(Propulsor):
         core_nozzle.inputs.stagnation_pressure                 = combustor.outputs.stagnation_pressure
         
         #flow through the core nozzle
-        core_nozzle(conditions)
+        core_nozzle.compute_limited_geometry(conditions)
 
         # compute the thrust using the thrust component
         #link the thrust component to the core nozzle
@@ -167,6 +167,24 @@ class Ramjet(Propulsor):
     
     def size(self,state):  
         
+        """ Size the ramjet
+    
+            Assumptions:
+            None
+    
+            Source:
+            N/A
+    
+            Inputs:
+            State [state()]
+    
+            Outputs:
+            None
+    
+            Properties Used:
+            N/A
+        """       
+        
         #Unpack components
         conditions = state.conditions      
         ram                       = self.ram
@@ -196,7 +214,7 @@ class Ramjet(Propulsor):
         combustor.inputs.mach_number                           = inlet_nozzle.outputs.mach_number
         
         #flow through the high pressure compressor
-        combustor(conditions)
+        combustor.compute_rayleigh(conditions)
         
         #link the core nozzle to the low pressure turbine
         core_nozzle.inputs.stagnation_temperature              = combustor.outputs.stagnation_temperature

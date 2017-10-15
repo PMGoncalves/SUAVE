@@ -63,8 +63,6 @@ class Compression_Nozzle(Energy_Component):
         self.outputs.stagnation_pressure     = 0.
         self.outputs.stagnation_enthalpy     = 0.
 
-    
-
     def compute(self,conditions):
         """ This computes the output values from the input values according to
         equations from the source.
@@ -100,8 +98,7 @@ class Compression_Nozzle(Energy_Component):
           pressure_ratio                      [-]
           polytropic_efficiency               [-]
         """           
-        #unpack the values
-        
+
         #unpack from conditions
         gamma   = conditions.freestream.isentropic_expansion_factor
         Cp      = conditions.freestream.specific_heat_at_constant_pressure
@@ -117,14 +114,12 @@ class Compression_Nozzle(Energy_Component):
         pid                     =  self.pressure_ratio
         etapold                 =  self.polytropic_efficiency
         compressibility_effects =  self.compressibility_effects
-
         
         #Method to compute the output variables
         
         #--Getting the output stagnation quantities
         Tt_out  = Tt_in*pid**((gamma-1)/(gamma*etapold))
         ht_out  = Cp*Tt_out
-        
 
         if compressibility_effects :
             
@@ -147,9 +142,8 @@ class Compression_Nozzle(Energy_Component):
             #-- Inlet Mach > 1.0, normal shock
             Mach[i_high]   = np.sqrt((1.+(gamma-1.)/2.*Mo[i_high]**2.)/(gamma*Mo[i_high]**2-(gamma-1.)/2.))
             T_out[i_high]  = Tt_out[i_high]/(1.+(gamma-1.)/2*Mach[i_high]*Mach[i_high])
-            Pt_out[i_high] = Pt_in[i_high]*((((gamma+1.)*(Mo[i_high]**2.))/((gamma-1.)*Mo[i_high]**2.+2.))**(gamma/(gamma-1.)))*((gamma+1.)/(2.*gamma*Mo[i_high]**2.-(gamma-1.)))**(1./(gamma-1.))
-            P_out[i_high]  = Pt_out[i_high]*(1.+(2.*gamma/(gamma+1.))*(Mach[i_high]**2.-1.))
-        
+            Pt_out[i_high] = pid*Pt_in[i_high]*((((gamma+1.)*(Mo[i_high]**2.))/((gamma-1.)*Mo[i_high]**2.+2.))**(gamma/(gamma-1.)))*((gamma+1.)/(2.*gamma*Mo[i_high]**2.-(gamma-1.)))**(1./(gamma-1.))
+            P_out[i_high]  = Pt_out[i_high]*(1+(gamma-1)/2*Mach[i_high]**2)**(-gamma/(gamma-1))
         else:
             Pt_out  = Pt_in*pid
             # in case pressures go too low
