@@ -74,7 +74,9 @@ class Combustor(Energy_Component):
         self.burner_drag_coefficient            = 0.1
         self.temperature_reference              = 222.
         self.hf                                 = 0.
-        self.specific_heat_constant_pressure    = 1510.
+        self.specific_heat_at_constant_pressure    = 1510.
+        self.isentropic_expansion_factor     = 1.238
+        self.maximum_fuel_to_air_ratio          = 0.08
     
     
     def compute(self,conditions):
@@ -312,7 +314,9 @@ class Combustor(Energy_Component):
         # unpacking the values form inputs
         nozzle = self.inputs.inlet_nozzle
         Tt_in  = self.inputs.stagnation_temperature
-        Pt_in   = self.inputs.stagnation_pressure
+        Pt_in  = self.inputs.stagnation_pressure
+        Tt_4   = self.turbine_inlet_temperature
+
 
         
         # unpacking values from self
@@ -323,84 +327,122 @@ class Combustor(Energy_Component):
         CfAwA3 = self.burner_drag_coefficient
         Tref   = self.temperature_reference
         hf     = self.hf
+        pid    = self.pressure_ratio
+        f_max  = self.maximum_fuel_to_air_ratio
         
         # New flow properties --not computed, these values should change considerably
-        Cpb    = conditions.freestream.specific_heat_at_constant_pressure
-        gamma  = conditions.freestream.isentropic_expansion_factor 
+        Cpb    = self.specific_heat_at_constant_pressure
+        gamma  = self.isentropic_expansion_factor 
         
         
         # Calculate input properties
         T_in   = nozzle.static_temperature
         V_in   = nozzle.velocity
         P_in   = nozzle.static_pressure
+        M_in   = nozzle.mach_number
         
         np.set_printoptions(threshold=np.nan)
         
         
-        #-- Find suitable fuel-to-air ratio     
+        #-- Assumptions for no fuel added (essentialy, default losses)    
         f   = 0.02
         
-        V4  = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
-        T4  = (T_in/(1+f))*(1+(1/(Cpb*T_in))*(eta_b*f*htf+f*hf+f*Cpb*Tref+(1+f*(Vf_V3)**2)*V_in**2/2))-V4**2/(2*Cpb)   
-        M4  = V4/np.sqrt(gamma*R*T4)
-        Tt  = T4*(1+(gamma-1)/2*M4**2)
+        V_aux   = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
+        Tt_aux  = (T_in/(1+f))*(1+(1/(Cpb*T_in))*(eta_b*f*htf+f*hf+f*Cpb*Tref+(1+f*(Vf_V3)**2)*V_in**2/2))
+        T_aux   = Tt_aux -V_aux**2/(2*Cpb)   
+        M_aux   = V_aux/np.sqrt(gamma*R*T_aux)
         
         
-        #-- Initialize array
-        f  = 0.001*Pt_in/Pt_in
+        #-- Initialize array 
+        f_aux   = 0.0*Pt_in/Pt_in
+        f       = 0.0*Pt_in/Pt_in
+        res     = 0.0*Pt_in/Pt_in
+        
+        V_out   = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
+        Tt_out  = (T_in/(1+f))*(1+(1/(Cpb*T_in))*(eta_b*f*htf+f*hf+f*Cpb*Tref+(1+f*(Vf_V3)**2)*V_in**2/2))
+        T_out   = Tt_out -V_out**2/(2*Cpb)   
+        M_out   = V_out/np.sqrt(gamma*R*T_out)
+        
+#        ###########
+#        
+#        f = (Tt_4 - Tt_in)/((1/Cpb)*(eta_b*htf + hf + Tref + (Vf_V3)**2*(Tt_in-T_in))-Tt_4)
+#
+#        V_out   = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
+#        T_out   = Tt_4 -V_out**2/(2*Cpb)  
+#        M_out   = V_out/np.sqrt(gamma*R*T_out)
+#        Tt_out  = Tt_4*Pt_in/Pt_in
+#        
+#        i_mach  = M_out < 1.0
+#        
+#        res[i_mach] = 1.0
+#        print '+++++ ANTES'
+#        print Tt_out[i_mach]   
+#        print f[i_mach]  
+#        
+#        f[i_mach] = 0.0
+#        while np.any(res > 0.0001) :
+#            V_out[i_mach]   = V_in[i_mach]*(((1+f[i_mach]*Vfx_V3)/(1+f[i_mach]))-(CfAwA3/(2*(1+f[i_mach]))))
+#            T_out[i_mach]   = V_out[i_mach]**2/(gamma*R)
+#            Tt_out[i_mach]  = T_out[i_mach] + V_out[i_mach]**2/(2*Cpb)
+#            f_aux[i_mach]   = (T_out[i_mach] - Tt_in[i_mach])/((1/Cpb)*(eta_b*htf + hf + Tref + (Vf_V3)**2*(Tt_in[i_mach]-T_in[i_mach]))-Tt_out[i_mach]) 
+#            
+#            res[i_mach]     = np.abs(f[i_mach] - f_aux[i_mach])
+#            
+#            f[i_mach]       = f_aux[i_mach]
+#            
+#        print '+++++ DEPOIS'
+#        print Tt_out[i_mach]   
+#        print f[i_mach] 
+#        
+#        M_out[i_mach] = 1.0
 
-        V_out = 0.0*Pt_in/Pt_in
-        T_out = 0.0*Pt_in/Pt_in
-        M_out = 0.0*Pt_in/Pt_in
-        Tt_out = 0.0*Pt_in/Pt_in
-        f_out = 0.0*Pt_in/Pt_in
         
-        
-        i = 0
-        
-        while i < 100 : 
-            V4  = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
-            T4  = (T_in/(1+f))*(1+(1/(Cpb*T_in))*(eta_b*f*htf+f*hf+f*Cpb*Tref+(1+f*(Vf_V3)**2)*V_in**2/2))-V4**2/(2*Cpb)   
-            M4  = V4/np.sqrt(gamma*R*T4)
-            Tt  = T4*(1+(gamma-1)/2*M4**2)
+    ###############
+    
+        while np.any(f_aux <= f_max) : 
+            V_aux   = V_in*(((1+f*Vfx_V3)/(1+f_aux))-(CfAwA3/(2*(1+f_aux))))
+            Tt_aux  = (T_in/(1+f_aux))*(1+(1/(Cpb*T_in))*(eta_b*f_aux*htf+f_aux*hf+f_aux*Cpb*Tref+(1+f_aux*(Vf_V3)**2)*V_in**2/2))
+            T_aux   = Tt_aux -V_aux**2/(2*Cpb)   
+            M_aux   = V_aux/np.sqrt(gamma*R*T_aux)
 
-            i_max = Tt > 2400.
-            i_min = Tt <= 2200.
+            i_min   = Tt_aux <= Tt_4       
+            i_mach  = M_aux >= 1.0
+            i_igni  = T_in > self.fuel_data.temperatures.autoignition
+            i_f     = f_aux >= 0.02
             
-            i_mach = M4 >= 1.0
-            i_not  = M4 < 1.0
+            i_aux1  = np.logical_and(i_igni, i_f)
+            i_aux   = np.logical_and(i_min,i_mach)
+            i_limit = np.logical_and(i_aux,i_aux1)
+
             
-            i_limit = np.logical_and(i_min,i_mach)
-            V_out[i_limit]  = V4[i_limit]
-            T_out[i_limit]  = T4[i_limit]
-            M_out[i_limit]  = M4[i_limit]
-            Tt_out[i_limit] = Tt[i_limit] 
-            f_out[i_limit]  = f[i_limit]
+            V_out[i_limit]  = V_aux[i_limit]
+            T_out[i_limit]  = T_aux[i_limit]
+            M_out[i_limit]  = M_aux[i_limit]
+            Tt_out[i_limit] = Tt_aux[i_limit] 
+            f[i_limit]      = f_aux[i_limit]
             
-            f = f + 0.0005
-            i = i + 1
+            f_aux   = f_aux + 0.0001
             
-            print 'i ', i, 'f', f[-1]
-            
-        print '++++++++++++++++++++++++++++++++++++++'
-        print 'COMBUSTOR 2 '
-        print 'f : ', f_out
-        print 'u: ', V_out, 'T : ', T_out, 'M : ', M_out, 'Tt4', Tt_out   
-        print '++++++++++++++++++++++++++++++++++++++'
-        print '++++++++++++++++++++++++++++++++++++++'
+#            
+#        print '++++++++++++++++++++++++++++++++++++++'
+#        #print 'COMBUSTOR 2 '
+#        print 'flol - f : ', flol - f
+#        print 'u: ', V_out, 'T : ', T_out, 'M : ', M_out, 'Tt4', Tt_out   
+#        print '++++++++++++++++++++++++++++++++++++++'
+#        print '++++++++++++++++++++++++++++++++++++++'
 
 
         # Computing the exit static and stagnation conditions
-        ht_out  = Cp*Tt
+        ht_out  = Cp*Tt_out
         P_out   = P_in
-        Pt_out = Pt_in*((((gamma+1.)*(M4**2.))/((gamma-1.)*M4**2.+2.))**(gamma/(gamma-1.)))*((gamma+1.)/(2.*gamma*M4**2.-(gamma-1.)))**(1./(gamma-1.))
+        Pt_out  = Pt_in*((1+(gamma-1)/2*M_out**2)/(1+(gamma-1)/2*M_in**2))**(gamma/(gamma-1))
 
         
         # pack computed quantities into outputs
         self.outputs.stagnation_temperature  = Tt_out
         self.outputs.stagnation_pressure     = Pt_out
         self.outputs.stagnation_enthalpy     = ht_out
-        self.outputs.fuel_to_air_ratio       = f_out
+        self.outputs.fuel_to_air_ratio       = f
         self.outputs.static_temperature      = T_out
         self.outputs.static_pressure         = P_out
         self.outputs.velocity                = V_out

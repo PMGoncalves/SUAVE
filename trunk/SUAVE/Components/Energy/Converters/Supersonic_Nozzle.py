@@ -70,7 +70,7 @@ class Supersonic_Nozzle(Energy_Component):
         self.outputs.stagnation_enthalpy     = 0.
         self.max_area_ratio                  = 2.
         self.min_area_ratio                  = 1.35  
-        self.specific_heat_constant_pressure  = 1510.
+        self.specific_heat_at_constant_pressure  = 1510.
         self.isentropic_expansion_factor     = 1.238
     
     
@@ -392,9 +392,10 @@ class Supersonic_Nozzle(Energy_Component):
         pid      = self.pressure_ratio
         
         # these values change considerably after fuel addition at hypersonic speed
-        g_e      = conditions.freestream.isentropic_expansion_factor
-        Cpe      = conditions.freestream.specific_heat_at_constant_pressure
-        
+        g_e      = self.isentropic_expansion_factor
+        Cpe      = self.specific_heat_at_constant_pressure
+
+    
         P_out = Po
         
         # Compute output properties

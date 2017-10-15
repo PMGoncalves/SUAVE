@@ -1,8 +1,8 @@
 ## @ingroup Attributes-Propellants
-#Jet A
+#JP-7
 #
-# Created:  Unk 2013, SUAVE TEAM
-# Modified: Feb 2016, M. Vegh
+# Created:  Oct 2017, P. Goncalves
+
 
 # ----------------------------------------------------------------------
 #  Imports
@@ -52,6 +52,6 @@ class JP_7(Propellant):
 
         # critical temperatures
         self.temperatures.flash        = 311.15                 # K
-        self.temperatures.autoignition = 483.15                 # K
+        self.temperatures.autoignition = 515.15                 # K
         self.temperatures.freeze       = 233.15                 # K
         self.temperatures.boiling      = 0.0                    # K
