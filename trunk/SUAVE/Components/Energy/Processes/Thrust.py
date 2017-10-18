@@ -176,7 +176,7 @@ class Thrust(Energy_Component):
         Fsp              = 1./(gamma*M0)*Thrust_nd
 
         #Computing the specific impulse
-        #Isp              = Fsp*a0*(1+bypass_ratio)/(f*g)
+        Isp              = Fsp*a0*(1+bypass_ratio)/(f*g)
         
         #Computing the TSFC
         TSFC             = 3600.*f*g/(Fsp*a0*(1+bypass_ratio))  
@@ -189,6 +189,7 @@ class Thrust(Energy_Component):
         #fuel flow rate
         a = np.array([0.])        
         fuel_flow_rate   = np.fmax(0.1019715*FD2*TSFC/3600,a) #use units package for the constants
+        
         #computing the power 
         power            = FD2*u0
         np.set_printoptions(threshold=np.inf)
@@ -202,7 +203,9 @@ class Thrust(Energy_Component):
         self.outputs.core_mass_flow_rate               = mdot_core
         self.outputs.fuel_flow_rate                    = fuel_flow_rate    
         self.outputs.power                             = power  
-    
+        
+        self.outputs.isp                               = Isp
+        self.outputs.fsp                                = Fsp*conditions.freestream.speed_of_sound
         
     
     def size(self,conditions):
@@ -254,6 +257,8 @@ class Thrust(Energy_Component):
                 
         #compute dimensional mass flow rates
         mdot_core                   = design_thrust/(Fsp*a0*(1+bypass_ratio)*no_eng*throttle)  
+        
+        print 'Fsp', Fsp*a0
         mdhc                        = mdot_core/ (np.sqrt(Tref/total_temperature_reference)*(total_pressure_reference/Pref))
     
         #pack outputs

@@ -153,10 +153,10 @@ class Turboramjet(Propulsor):
         i_tj    = Mo <= turbojet_mach
         
         #-- Defines dual operation mode
-        i_mx    = np.logical_and(Mo > turbojet_mach, Mo < ramjet_mach)
+        i_mx    = np.logical_and(Mo > turbojet_mach, Mo <= ramjet_mach)
         
         #-- Defines ramjet operation
-        i_rj    = Mo >= ramjet_mach
+        i_rj    = Mo > ramjet_mach
         
         
         #-- Determine ramjet bypass ratio

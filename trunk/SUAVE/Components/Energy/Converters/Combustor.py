@@ -137,6 +137,7 @@ class Combustor(Energy_Component):
         
         # Using the Turbine exit temperature, the fuel properties and freestream temperature to compute the fuel to air ratio f
         f       = (ht4 - ht_in)/(eta_b*htf-ht4)
+        
 
         # Computing the exit static and stagnation conditions
         ht_out  = Cp*Tt4
@@ -209,7 +210,9 @@ class Combustor(Energy_Component):
 
         # Initialize arrays
         M_out  = 1*Pt_in/Pt_in
-        Ptr   = 1*Pt_in/Pt_in
+        Ptr    = 1*Pt_in/Pt_in
+        Mach   = Mach*Pt_in/Pt_in
+
 
         # Make i_rayleigh the size of output arrays
         i_rayleigh = Pt_in < 2*Pt_in

@@ -24,7 +24,7 @@ from SUAVE.Components.Propulsors.Propulsor import Propulsor
 # ----------------------------------------------------------------------
 
 ## @ingroup Components-Energy-Networks
-class Turboramjet(Propulsor):
+class Turboramjet_Dual(Propulsor):
     """ This is a turbofan. 
     
         Assumptions:
@@ -143,7 +143,7 @@ class Turboramjet(Propulsor):
         
         # Bypass system
         Mo      = conditions.freestream.mach_number
-        i_tj    = Mo < mach_separation
+        i_tj    = Mo <= mach_separation
         i_rj    = Mo > mach_separation
     
             
@@ -225,7 +225,7 @@ class Turboramjet(Propulsor):
         #combustor_2.inputs.mach_number              = mach_number
         
         # flow through combustor
-        combustor_2(conditions)
+        combustor_2.compute_rayleigh(conditions)
         
         # Fuel-to-air ratio adjustments
         final_f1        = combustor.outputs.fuel_to_air_ratio
@@ -257,44 +257,6 @@ class Turboramjet(Propulsor):
         #flow through nozzle
         core_nozzle(conditions)
         
-#        print 'TURBOJET ', i_tj
-#        print '-------------------------------------------'
-#        print 'INLET '
-#        print 'Pressure    :', inlet_nozzle.outputs.stagnation_pressure
-#        print 'Temperature :', inlet_nozzle.outputs.stagnation_temperature
-#        print '-------------------------------------------'
-#        print 'LOW PRESSURE COMPRESSOR '
-#        print 'Pressure    :', low_pressure_compressor.outputs.stagnation_pressure
-#        print 'Temperature :', low_pressure_compressor.outputs.stagnation_temperature         
-#        print '-------------------------------------------'
-#        print 'HIGH PRESSURE COMPRESSOR '
-#        print 'Pressure    :', high_pressure_compressor.outputs.stagnation_pressure
-#        print 'Temperature :', high_pressure_compressor.outputs.stagnation_temperature       
-#        print '-------------------------------------------'
-#        print 'COMBUSTOR 1 '
-#        print 'f 1 : ', combustor.outputs.fuel_to_air_ratio
-#        print '-------------------------------------------'
-#        print 'HIGH PRESSURE TURBINE '
-#        print 'Pressure    :', high_pressure_turbine.outputs.stagnation_pressure
-#        print 'Temperature :', high_pressure_turbine.outputs.stagnation_temperature
-#                      
-#        print '-------------------------------------------'
-#        print 'LOW PRESSURE TURBINE '
-#        print 'Pressure    :', low_pressure_turbine.outputs.stagnation_pressure
-#        print 'Temperature :', low_pressure_turbine.outputs.stagnation_temperature
-#    
-#        print '-------------------------------------------'
-#        print 'SECOND COMBUSTOR '
-#        print 'f 2 : ', combustor_2.outputs.fuel_to_air_ratio
-#        print 'Pressure IN :', combustor_2.inputs.stagnation_pressure
-#        print 'TemperatureIN:', combustor_2.inputs.stagnation_temperature
-#    
-#
-#        print '-------------------------------------------'
-#        print 'NOZZLE '
-#        print 'Pressure    :', core_nozzle.outputs.stagnation_pressure
-#        print 'Temperature :', core_nozzle.outputs.stagnation_temperature
-#        print '-------------------------------------------'
   
         #link the thrust component to the combustor 
         thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio + combustor_2.outputs.fuel_to_air_ratio
@@ -308,8 +270,8 @@ class Turboramjet(Propulsor):
         mixed_temperature[i_rj]                                = combustor_2.outputs.stagnation_temperature[i_rj]
         mixed_pressure[i_rj]                                   = combustor_2.outputs.stagnation_pressure[i_rj]
         
-        thrust.inputs.total_temperature_reference              = mixed_temperature
-        thrust.inputs.total_pressure_reference                 = mixed_pressure
+        thrust.inputs.stag_temp_lpt_exit              = mixed_temperature
+        thrust.inputs.stag_press_lpt_exit                 = mixed_pressure
 
         thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio + combustor_2.outputs.fuel_to_air_ratio
 
@@ -321,8 +283,8 @@ class Turboramjet(Propulsor):
              
         #link the thrust component to the low pressure compressor 
         #-- Turbojet mode
-        thrust.inputs.total_temperature_reference             = inlet_nozzle.outputs.stagnation_temperature
-        thrust.inputs.total_pressure_reference                 = inlet_nozzle.outputs.stagnation_pressure
+#        thrust.inputs.total_temperature_reference             = inlet_nozzle.outputs.stagnation_temperature
+#        thrust.inputs.total_pressure_reference                 = inlet_nozzle.outputs.stagnation_pressure
         thrust.inputs.number_of_engines                        = number_of_engines
         thrust.inputs.bypass_ratio                             = bypass_ratio
         thrust.inputs.flow_through_core                        = 1.0 #scaled constant to turn on core thrust computation
@@ -341,6 +303,13 @@ class Turboramjet(Propulsor):
         results = Data()
         results.thrust_force_vector = F
         results.vehicle_mass_rate   = mdot
+        
+        results.fsp                 = thrust.outputs.fsp
+        results.isp                 = thrust.outputs.isp
+        results.f                   = thrust.inputs.fuel_to_air_ratio
+        results.no                  = results.fsp * conditions.freestream.velocity / (results.f  * combustor.fuel_data.specific_energy)
+        results.sfc                 = thrust.outputs.thrust_specific_fuel_consumption
+
         
         # store data
         results_conditions = Data
@@ -541,6 +510,13 @@ class Turboramjet(Propulsor):
         results = Data()
         results.thrust_force_vector = F
         results.vehicle_mass_rate   = mdot
+        
+        results.fsp                 = thrust.outputs.fsp
+        results.isp                 = thrust.outputs.isp
+        results.f                   = thrust.inputs.fuel_to_air_ratio
+        results.no                  = results.fsp * conditions.freestream.velocity / (results.f  * combustor.fuel_data.specific_energy)
+        results.sfc                 = thrust.outputs.thrust_specific_fuel_consumption
+        
         return results
         
         

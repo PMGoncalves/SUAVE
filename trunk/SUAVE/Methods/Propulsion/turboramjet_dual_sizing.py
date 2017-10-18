@@ -16,7 +16,7 @@ from SUAVE.Core import Data
 #   Sizing
 # ----------------------------------------------------------------------
 
-def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_isa = 0, conditions = None):  
+def turboramjet_dual_sizing(turboramjet,mach_number = None, altitude = None, delta_isa = 0, conditions = None):  
     """ create and evaluate a turboramjet network
     """
 
@@ -103,7 +103,7 @@ def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_is
     #Bypass system
     Mo      = conditions.freestream.mach_number
     #-- Defines turbojet operation
-    i_tj    = Mo < mach_separation
+    i_tj    = Mo <= mach_separation
     
     #-- Defines ramjet operation
     i_rj    = Mo > mach_separation
@@ -189,7 +189,7 @@ def turboramjet_sizing(turboramjet,mach_number = None, altitude = None, delta_is
         combustor_2.inputs.stagnation_pressure          = inlet_nozzle.outputs.stagnation_pressure
         
         # flow through combustor
-        combustor_2(conditions)
+        combustor_2.compute_rayleigh(conditions)
         
         # Link the nozzle to the combustor
         core_nozzle.inputs.stagnation_temperature       = combustor_2.outputs.stagnation_temperature
