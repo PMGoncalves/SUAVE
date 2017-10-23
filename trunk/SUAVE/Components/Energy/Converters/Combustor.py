@@ -76,7 +76,7 @@ class Combustor(Energy_Component):
         self.hf                                 = 0.
         self.specific_heat_at_constant_pressure    = 1510.
         self.isentropic_expansion_factor     = 1.238
-        self.maximum_fuel_to_air_ratio          = 0.08
+        self.maximum_fuel_to_air_ratio          = 0.04
     
     
     def compute(self,conditions):
@@ -408,7 +408,7 @@ class Combustor(Energy_Component):
             i_min   = Tt_aux <= Tt_4       
             i_mach  = M_aux >= 1.0
             i_igni  = T_in > self.fuel_data.temperatures.autoignition
-            i_f     = f_aux >= 0.02
+            i_f     = f_aux >= 0.005
             
             i_aux1  = np.logical_and(i_igni, i_f)
             i_aux   = np.logical_and(i_min,i_mach)
