@@ -12,6 +12,8 @@ import SUAVE
 
 import numpy as np
 from scipy.optimize import fsolve
+from warnings import warn
+
 
 from SUAVE.Core import Data
 from SUAVE.Components.Energy.Energy_Component import Energy_Component
@@ -76,7 +78,7 @@ class Combustor(Energy_Component):
         self.hf                                 = 0.
         self.specific_heat_at_constant_pressure    = 1510.
         self.isentropic_expansion_factor     = 1.238
-        self.maximum_fuel_to_air_ratio          = 0.04
+        self.maximum_fuel_to_air_ratio          = 0.06
     
     
     def compute(self,conditions):
@@ -262,6 +264,16 @@ class Combustor(Energy_Component):
         self.outputs.stagnation_enthalpy     = ht_out
         self.outputs.fuel_to_air_ratio       = f    
         self.outputs.mach_number             = M_out
+        
+        # pack computed quantities into outputs
+        self.outputs.stagnation_temperature  = Tt_out
+        self.outputs.stagnation_pressure     = Pt_out
+        self.outputs.stagnation_enthalpy     = ht_out
+        self.outputs.fuel_to_air_ratio       = f
+        self.outputs.static_temperature      = T_out
+        self.outputs.static_pressure         = P_out
+        self.outputs.velocity                = V_out
+        self.outputs.mach_number             = M_out
     
     def compute_scramjet(self,conditions):
         """ This computes the output values from the input values according to
@@ -344,60 +356,33 @@ class Combustor(Energy_Component):
         np.set_printoptions(threshold=np.nan)
         
         
-        #-- Assumptions for no fuel added (essentialy, default losses)    
-        f   = 0.02
-        
-        V_aux   = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
-        Tt_aux  = (T_in/(1+f))*(1+(1/(Cpb*T_in))*(eta_b*f*htf+f*hf+f*Cpb*Tref+(1+f*(Vf_V3)**2)*V_in**2/2))
-        T_aux   = Tt_aux -V_aux**2/(2*Cpb)   
-        M_aux   = V_aux/np.sqrt(gamma*R*T_aux)
-        
+#        -- Assumptions for no fuel added (essentialy, default losses)    
+#        f   = 0.058 * Pt_in/Pt_in
+#        
+#        V_aux   = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
+#        Tt_aux  = (T_in/(1+f))*(1+(1/(Cpb*T_in))*(eta_b*f*htf+f*hf+f*Cpb*Tref+(1+f*(Vf_V3)**2)*V_in**2/2))
+#        T_aux   = Tt_aux -V_aux**2/(2*Cpb)   
+#        M_aux   = V_aux/np.sqrt(gamma*R*T_aux)
+#        
+#        V_out   = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
+#        Tt_out  = (T_in/(1+f))*(1+(1/(Cpb*T_in))*(eta_b*f*htf+f*hf+f*Cpb*Tref+(1+f*(Vf_V3)**2)*V_in**2/2))
+#        T_out   = Tt_out -V_out**2/(2*Cpb)   
+#        M_out   = V_out/np.sqrt(gamma*R*T_out)
+#        
+#        if np.any(M_out<1.0):
+#            warn('Mach subsonic',RuntimeWarning)
+#            M_out[M_out<1.0] = 1.0
+#
+       # print 'M_out', M_out
         
         #-- Initialize array 
         f_aux   = 0.0*Pt_in/Pt_in
         f       = 0.0*Pt_in/Pt_in
-        res     = 0.0*Pt_in/Pt_in
-        
-        V_out   = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
-        Tt_out  = (T_in/(1+f))*(1+(1/(Cpb*T_in))*(eta_b*f*htf+f*hf+f*Cpb*Tref+(1+f*(Vf_V3)**2)*V_in**2/2))
-        T_out   = Tt_out -V_out**2/(2*Cpb)   
-        M_out   = V_out/np.sqrt(gamma*R*T_out)
-        
-#        ###########
-#        
-#        f = (Tt_4 - Tt_in)/((1/Cpb)*(eta_b*htf + hf + Tref + (Vf_V3)**2*(Tt_in-T_in))-Tt_4)
-#
-#        V_out   = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
-#        T_out   = Tt_4 -V_out**2/(2*Cpb)  
-#        M_out   = V_out/np.sqrt(gamma*R*T_out)
-#        Tt_out  = Tt_4*Pt_in/Pt_in
-#        
-#        i_mach  = M_out < 1.0
-#        
-#        res[i_mach] = 1.0
-#        print '+++++ ANTES'
-#        print Tt_out[i_mach]   
-#        print f[i_mach]  
-#        
-#        f[i_mach] = 0.0
-#        while np.any(res > 0.0001) :
-#            V_out[i_mach]   = V_in[i_mach]*(((1+f[i_mach]*Vfx_V3)/(1+f[i_mach]))-(CfAwA3/(2*(1+f[i_mach]))))
-#            T_out[i_mach]   = V_out[i_mach]**2/(gamma*R)
-#            Tt_out[i_mach]  = T_out[i_mach] + V_out[i_mach]**2/(2*Cpb)
-#            f_aux[i_mach]   = (T_out[i_mach] - Tt_in[i_mach])/((1/Cpb)*(eta_b*htf + hf + Tref + (Vf_V3)**2*(Tt_in[i_mach]-T_in[i_mach]))-Tt_out[i_mach]) 
-#            
-#            res[i_mach]     = np.abs(f[i_mach] - f_aux[i_mach])
-#            
-#            f[i_mach]       = f_aux[i_mach]
-#            
-#        print '+++++ DEPOIS'
-#        print Tt_out[i_mach]   
-#        print f[i_mach] 
-#        
-#        M_out[i_mach] = 1.0
+        V_out   = 1.0*Pt_in/Pt_in
+        T_out   = 1.0*Pt_in/Pt_in
+        Tt_out  = 1.0*Pt_in/Pt_in
+        M_out   = 1.0*Pt_in/Pt_in
 
-        
-    ###############
     
         while np.any(f_aux <= f_max) : 
             V_aux   = V_in*(((1+f*Vfx_V3)/(1+f_aux))-(CfAwA3/(2*(1+f_aux))))
@@ -405,9 +390,9 @@ class Combustor(Energy_Component):
             T_aux   = Tt_aux -V_aux**2/(2*Cpb)   
             M_aux   = V_aux/np.sqrt(gamma*R*T_aux)
 
-            i_min   = Tt_aux <= Tt_4       
+            i_min   = Tt_aux <= Tt_4*4       
             i_mach  = M_aux >= 1.0
-            i_igni  = T_in > self.fuel_data.temperatures.autoignition
+            i_igni  = True #T_in > self.fuel_data.temperatures.autoignition
             i_f     = f_aux >= 0.005
             
             i_aux1  = np.logical_and(i_igni, i_f)
@@ -422,8 +407,10 @@ class Combustor(Energy_Component):
             f[i_limit]      = f_aux[i_limit]
             
             f_aux   = f_aux + 0.0001
-            
 #            
+#
+#        print 'f aux', f_aux
+#        print 'M', M_out[i_limit]
 #        print '++++++++++++++++++++++++++++++++++++++'
 #        #print 'COMBUSTOR 2 '
 #        print 'flol - f : ', flol - f
@@ -436,7 +423,7 @@ class Combustor(Energy_Component):
         ht_out  = Cp*Tt_out
         P_out   = P_in
         Pt_out  = Pt_in*((1+(gamma-1)/2*M_out**2)/(1+(gamma-1)/2*M_in**2))**(gamma/(gamma-1))
-
+ 
         
         # pack computed quantities into outputs
         self.outputs.stagnation_temperature  = Tt_out
@@ -447,6 +434,10 @@ class Combustor(Energy_Component):
         self.outputs.static_pressure         = P_out
         self.outputs.velocity                = V_out
         self.outputs.mach_number             = M_out
+        
+        
+        
+ 
 
     
     __call__ = compute

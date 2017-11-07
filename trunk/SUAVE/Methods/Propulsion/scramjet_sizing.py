@@ -124,7 +124,7 @@ def scramjet_sizing(scramjet,mach_number = None, altitude = None, delta_isa = 0,
     inlet_nozzle.inputs.stagnation_pressure                = ram.outputs.stagnation_pressure #conditions.freestream.stagnation_pressure
     
     #Flow through the inlet nozzle
-    inlet_nozzle.compute_scramjet(conditions)
+    inlet_nozzle(conditions)
 
     #link the combustor to the high pressure compressor
     combustor.inputs.stagnation_temperature                = inlet_nozzle.outputs.stagnation_temperature

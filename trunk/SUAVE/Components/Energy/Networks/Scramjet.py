@@ -113,7 +113,7 @@ class Scramjet(Propulsor):
         inlet_nozzle.inputs.stagnation_pressure                = ram.outputs.stagnation_pressure #conditions.freestream.stagnation_pressure
         
         #Flow through the inlet nozzle
-        inlet_nozzle.compute_scramjet(conditions)
+        inlet_nozzle(conditions)
     
         #link the combustor to the high pressure compressor
         combustor.inputs.stagnation_temperature                = inlet_nozzle.outputs.stagnation_temperature
@@ -132,7 +132,7 @@ class Scramjet(Propulsor):
         core_nozzle.inputs.fuel_to_air_ratio                   = combustor.outputs.fuel_to_air_ratio
         
         #flow through the core nozzle
-        core_nozzle.compute_scramjet(conditions)
+        core_nozzle(conditions)
         
         #link the thrust component to the core nozzle
         thrust.inputs.core_exit_pressure                       = core_nozzle.outputs.pressure
@@ -239,7 +239,7 @@ class Scramjet(Propulsor):
         inlet_nozzle.inputs.stagnation_pressure                = ram.outputs.stagnation_pressure #conditions.freestream.stagnation_pressure
         
         #Flow through the inlet nozzle
-        inlet_nozzle.compute_scramjet(conditions)
+        inlet_nozzle(conditions)
     
         #link the combustor to the high pressure compressor
         combustor.inputs.stagnation_temperature                = inlet_nozzle.outputs.stagnation_temperature
@@ -258,7 +258,7 @@ class Scramjet(Propulsor):
         core_nozzle.inputs.fuel_to_air_ratio                   = combustor.outputs.fuel_to_air_ratio
         
         #flow through the core nozzle
-        core_nozzle.compute_scramjet(conditions)
+        core_nozzle(conditions)
         
         #link the thrust component to the core nozzle
         thrust.inputs.core_exit_pressure                       = core_nozzle.outputs.pressure

@@ -257,6 +257,53 @@ class Compression_Nozzle(Energy_Component):
 #        self.outputs.velocity                = u_out
 #        self.outputs.static_pressure         = P_out 
 
+    def compute_kinetic(self,conditions):
+        #unpack from conditions
+        gamma   = conditions.freestream.isentropic_expansion_factor
+        Mo      = conditions.freestream.mach_number
+        Cp      = conditions.freestream.specific_heat_at_constant_pressure
+
+
+        
+        #unpack from inpust
+        Tt_in   = self.inputs.stagnation_temperature
+        Pt_in   = self.inputs.stagnation_pressure
+        
+        #unpack from self
+        eta_ke  = self.kinetic_efficiency
+        pid     = self.pressure_ratio
+    
+        M_in = Mo
+
+        Mach = M_in *(1.-((1.-eta_ke)/0.4)**(1./4.))
+        
+        if np.any(Mach<1.0):
+            warn('Mach subsonic',RuntimeWarning)
+            Mach[Mach<1.0] = 1.0
+        
+        Pt_out  = pid*Pt_in * (1 / ( 1 + ((1 - eta_ke)/(2/((gamma-1)*M_in**2))))**(gamma/(gamma-1)))
+        Tt_out  = Tt_in*pid**((gamma-1)/gamma)
+        
+        T_out   = Tt_out / (1 + (gamma-1)/2*Mach**2)
+        
+        ht_out = Cp*Tt_out
+        h_out  = Cp*T_out
+        
+        u_out  = np.sqrt(2*(ht_out-h_out))
+        P_out  = Pt_out / (1 + (gamma-1)/2*Mach**2)**(gamma/(gamma-1))
+        
+        #pack computed quantities into outputs
+
+        self.outputs.stagnation_temperature  = Tt_out
+        self.outputs.stagnation_pressure     = Pt_out
+        self.outputs.stagnation_enthalpy     = ht_out
+        self.outputs.mach_number             = Mach
+        self.outputs.static_temperature      = T_out
+        self.outputs.static_enthalpy         = h_out
+        self.outputs.velocity                = u_out
+        self.outputs.static_pressure         = P_out 
+        
+        
     def compute_scramjet(self,conditions):
         """ This computes the output values from the input values according to
         equations from the source.
@@ -331,4 +378,4 @@ class Compression_Nozzle(Energy_Component):
         self.outputs.velocity                = u_out
         self.outputs.static_pressure         = P_out 
 
-    __call__ = compute
+    __call__ = compute_kinetic
