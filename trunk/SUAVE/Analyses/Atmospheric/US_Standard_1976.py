@@ -175,21 +175,71 @@ class US_Standard_1976(Atmospheric):
 # ----------------------------------------------------------------------
 #   Module Tests
 # ----------------------------------------------------------------------
+#if __name__ == '__main__':
+#    
+#    import pylab as plt
+#    
+#    h = np.linspace(-1.,200.,200) * Units.km
+#    delta_isa = 0.
+#    h = 5000.
+#    atmosphere = US_Standard_1976()
+#    
+#    data = atmosphere.compute_values(h,delta_isa)
+#    p   = data.pressure
+#    T   = data.temperature
+#    rho = data.density
+#    a   = data.speed_of_sound
+#    mew = data.dynamic_viscosity
+#    
+#    print data
+    
+# ----------------------------------------------------------------------
+#   Module Tests
+# ----------------------------------------------------------------------
 if __name__ == '__main__':
     
     import pylab as plt
     
-    h = np.linspace(-1.,60.,200) * Units.km
-    delta_isa = 0.
-    h = 5000.
+    h = np.linspace(80.,120.,200) * Units.km
+    
     atmosphere = US_Standard_1976()
     
-    data = atmosphere.compute_values(h,delta_isa)
-    p   = data.pressure
-    T   = data.temperature
-    rho = data.density
-    a   = data.speed_of_sound
-    mew = data.dynamic_viscosity
+    atmo_data = atmosphere.compute_values(h)
+
+    p   = atmo_data.pressure          
+    T   = atmo_data.temperature       
+    rho = atmo_data.density          
+    a   = atmo_data.speed_of_sound    
+    mu  = atmo_data.dynamic_viscosity   
     
-    print data
+    np.set_printoptions(threshold=np.nan)
+    print p
+    print h
+    
+    plt.figure(1)
+    plt.plot(p,h)
+    plt.xlabel('Pressure (Pa)')
+    plt.ylabel('Altitude (km)')
+    
+    plt.figure(2)
+    plt.plot(T,h)
+    plt.xlabel('Temperature (K)')
+    plt.ylabel('Altitude (km)')    
+    
+    plt.figure(3)
+    plt.plot(rho,h)
+    plt.xlabel('Density (kg/m^3)')
+    plt.ylabel('Altitude (km)')       
+    
+    plt.figure(4)
+    plt.plot(a,h)
+    plt.xlabel('Speed of Sound (m/s)')
+    plt.ylabel('Altitude (km)') 
+    
+    plt.figure(6)
+    plt.plot(mu, h)
+    plt.xlabel('Viscosity (kg/m-s)')
+    plt.ylabel('Altitude (km)')   
+
+    plt.show()
     

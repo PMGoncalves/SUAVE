@@ -59,21 +59,16 @@ def initialize_conditions(segment,state):
     # discretize on altitude
     alt = t_nondim * (altf-alt0) + alt0
                      
-    print alt
     
-    # process velocity vector
-    #v_mag = state.ones_row(1)
-    v_mag = entry_speed * alt
-    
-    print v_mag
+    # process velocity vector 
     v_mag = entry_speed*np.exp((1/(2*ballistic_nd*np.sin(-descent_angle)))*np.exp(-(alt[:,0]/alt0)*(alt0/7640)))
 
-    print v_mag
 
     v_x   = v_mag * np.cos(-descent_angle)
     v_z   = -v_mag * np.sin(-descent_angle)
     
     # pack conditions    
+    state.conditions.propulsion.throttle[:,0] = 0. 
     conditions.frames.inertial.velocity_vector[:,0] = v_x#[:,0]
     conditions.frames.inertial.velocity_vector[:,2] = v_z#[:,0]
     conditions.frames.inertial.position_vector[:,2] = -alt[:,0] # z points down
