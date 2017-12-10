@@ -60,17 +60,18 @@ class US_Standard_1976(Atmosphere):
     
         #86- 120 km
         altitude_append     = np.array([86.,    89.,    91.,  93.,    95.,    97., 99., 101., 103., 105., 107., 110., 112., 114., 116., 118., 120.]) *Units.km
-        temperature_apend   = np.array([186.87, 186.87, 186.87, 187.25, 188.42, 190.40, 193.27, 197.16, 202.23, 208.84, 217.63, 240., 264., 288., 312., 336., 360.])
+        temperature_append   = np.array([186.87, 186.87, 186.87, 187.25, 188.42, 190.40, 193.27, 197.16, 202.23, 208.84, 217.63, 240., 264., 288., 312., 336., 360.])
         density_append      = np.array([6.92789, 4.09588, 2.86182, 1.99463, 1.38963, 9.68809e-1, 6.76231e-1, 4.7264e-1, 3.30816e-1, 2.31952e-1, 1.63057e-1, 9.69560e-2, 6.9276e-2, 5.01920e-2, 3.71263e-2, 2.82884e-2, 2.2456e-2])*10e-6
         pressure_append     = np.array([0.3741, 0.2195, 0.1540, 0.1081, 0.0760, 0.0536, 0.038, 0.027, 0.019, 0.014, 0.0107, 7.133e-3, 5.5708e-3, 4.4433e-3, 3.619e-3, 3.0065e-3, 2.541e-3])
 
         self.breaks.altitude        = np.append(self.breaks.altitude, altitude_append)
-        self.breaks.temperature     = np.append(self.breaks.temperature,temperature_apend)
+        self.breaks.temperature     = np.append(self.breaks.temperature,temperature_append)
         self.breaks.pressure        = np.append(self.breaks.pressure,pressure_append)
         self.breaks.density         = np.append(self.breaks.temperature,density_append)
         
         np.set_printoptions(threshold=np.nan)
         print self.breaks.altitude  
+        print self.breaks.pressure
       
 # ----------------------------------------------------------------------
 #   Module Tests

@@ -200,7 +200,8 @@ if __name__ == '__main__':
     
     import pylab as plt
     
-    h = np.linspace(50.,120.,200) * Units.km
+    h = np.linspace(0.,120.,400) * Units.km
+    rho2 = 1.225*np.exp(-h/7000)
     
     atmosphere = US_Standard_1976()
     
@@ -212,7 +213,7 @@ if __name__ == '__main__':
     a   = atmo_data.speed_of_sound    
     mu  = atmo_data.dynamic_viscosity   
 
-    
+    h = h*1e-3
     plt.figure(1)
     plt.plot(p,h)
     plt.xlabel('Pressure (Pa)')
@@ -225,6 +226,7 @@ if __name__ == '__main__':
     
     plt.figure(3)
     plt.plot(rho,h)
+    plt.plot(rho2,h)
     plt.xlabel('Density (kg/m^3)')
     plt.ylabel('Altitude (km)')       
     
