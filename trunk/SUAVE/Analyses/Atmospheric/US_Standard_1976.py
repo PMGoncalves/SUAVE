@@ -178,10 +178,12 @@ class US_Standard_1976(Atmospheric):
 if __name__ == '__main__':
     
     import pylab as plt
+    import scipy as sp
+    from scipy.optimize import fsolve
+
     
     h = np.linspace(-1.,60.,200) * Units.km
     delta_isa = 0.
-    h = 5000.
     atmosphere = US_Standard_1976()
     
     data = atmosphere.compute_values(h,delta_isa)
@@ -191,5 +193,73 @@ if __name__ == '__main__':
     a   = data.speed_of_sound
     mew = data.dynamic_viscosity
     
+    # ---------------
+    exp_ratio = 69.
+    gamma = 1.196
+    Pto = 206.4*101325.
+    Tto  = 2800.
+    minp = 0.2
+    Rm = 8134/13.6
+    g = 9.8066
+    P_out = np.ones((200,1))
+    
+
+    # Vandenkerckhove function
+    a = gamma
+    b = ((1+gamma)/2)**((1+gamma)/(1-gamma))
+        
+    Gf = np.sqrt(a*b)
+
+    a = Gf
+    b = 2*gamma/(gamma-1)
+    print 'p', p
+    print np.shape(p)
+
+    func = lambda paux : exp_ratio - (  a / ( np.sqrt(b * (paux/Pto)**(2/gamma) * (1-(paux/Pto)**((gamma-1)/gamma)))))
+    P_aux = fsolve(func,p,factor = 0.01)
+    
+    P_out[:,0] = P_aux
+    
+    print 'P_out', P_out
+    print np.shape(P_out)
+        
+    i = P_out >= minp*p
+    # CF
+    a = (2*gamma**2)/(gamma-1)
+    b = (2/(gamma+1))**((gamma+1)/(gamma-1))
+    c = (1 - (P_out/Pto)**((gamma-1)/gamma))
+    d = ((P_out - p)/(Pto))*exp_ratio
+            
+    CF2 = np.sqrt(a*b*c)+d
+    print 'CF2', CF2
+    print np.shape(CF2)  
+    # CD
+    a = 2/(gamma + 1)
+    b = (gamma+1)/(2*(gamma-1))
+    c = np.sqrt((gamma)/(Rm*Tto))
+    CD = (a**b)*c
+    print np.shape(CD)  
+    u_out  = np.sqrt((2/(gamma-1))*(Rm)*Tto * (1 - (P_out/Pto)**((gamma-1)/gamma)))
+        
+    Isp = CF2/(CD*g)
+    Fsp = Isp*g
+    print np.shape(Isp)  
+              
+    plt.figure(1)
+    plt.plot(h/Units.km,Isp, 'k')
+    plt.xlabel('Altitude (km)')
+    plt.ylabel('Isp (s)')
+    plt.xlim([1,60])
+    plt.ylim([330,450])
+    
+    plt.figure(2)
+    plt.plot(h/Units.km, p/101325.)
+    plt.xlabel('Altitude (km)')
+    plt.ylabel('Pressure (atm)')
+    
+    plt.figure(3)
+    plt.plot(h/Units.km, CF2)
+    plt.xlabel('Altitude (km)')
+    plt.ylabel('CF')
     print data
     

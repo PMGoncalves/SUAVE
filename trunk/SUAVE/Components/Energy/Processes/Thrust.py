@@ -564,6 +564,7 @@ class Thrust(Energy_Component):
 #    plt.ylabel('CF')
 #    plt.show()        
 
+
 if __name__ == '__main__':
 
     #        vander_f    = np.sqrt(gamma * ( (1 + gamma) / 2)**((1+gamma)/(1-gamma)))
@@ -577,11 +578,11 @@ if __name__ == '__main__':
     
     gamma = 1.2
     Po = 101325.0
-    Pto = 100*Po
+    Pto = 250*101325.
     max_exp = 100.
     P_out = np.linspace(0, 100*Po, 200)
     Rm = 280.2
-    Tto = 2500.
+    Tto = 2800.
     g = 9.8066
     
     minp = 0.05
