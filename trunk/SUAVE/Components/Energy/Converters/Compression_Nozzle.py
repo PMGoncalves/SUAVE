@@ -378,4 +378,4 @@ class Compression_Nozzle(Energy_Component):
         self.outputs.velocity                = u_out
         self.outputs.static_pressure         = P_out 
 
-    __call__ = compute_kinetic
+    __call__ = compute_scramjet

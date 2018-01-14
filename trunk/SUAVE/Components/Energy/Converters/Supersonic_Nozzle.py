@@ -417,4 +417,4 @@ class Supersonic_Nozzle(Energy_Component):
         self.outputs.mach_number             = M_out
             
         
-    __call__ = compute
+    __call__ = compute_scramjet
