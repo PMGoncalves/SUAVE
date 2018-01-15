@@ -182,7 +182,7 @@ if __name__ == '__main__':
     from scipy.optimize import fsolve
 
     
-    h = np.linspace(-1.,60.,200) * Units.km
+    h = np.linspace(-1.,120.,200) * Units.km
     delta_isa = 0.
     atmosphere = US_Standard_1976()
     
@@ -194,13 +194,52 @@ if __name__ == '__main__':
     mew = data.dynamic_viscosity
     
     # ---------------
-    exp_ratio = 69.
-    gamma = 1.196
-    Pto = 206.4*101325.
-    Tto  = 2800.
-    minp = 0.2
-    Rm = 8134/13.6
+    
+    ## SSME
+#    exp_ratio = 69.
+#    gamma = 1.196
+#    Pto = 206.4*101325.
+#    Tto  = 3600.
+#    minp = 0.2
+#    Rm = 8134/13.6
+
+    ## vULCAIN 2
+#    exp_ratio = 60.
+#    gamma = 1.198
+#    Pto = 116.4*101325.
+#    Tto  = 3550*0.78
+#    minp = 0.2
+#    Rm = 8134/13.5
+#    g = 9.8066
+
+    ## RD-0120
+#    exp_ratio = 85.7
+#    gamma = 1.1955
+#    Pto = 219*101325.
+#    Tto  = 3625*0.78
+#    minp = 0.2
+#    Rm = 8134/13.6
+#    g = 9.8066
+
+#    ## YF-77
+#    exp_ratio = 49.
+#    gamma = 1.2015
+#    Pto = 102*101325.
+#    Tto  = 3450*0.78
+#    minp = 0.2
+#    Rm = 8134/12.73
+#    g = 9.8066
+
+    ## LE-7A
+    exp_ratio = 51.9
+    gamma = 1.985
+    Pto = 120*101325.
+    Tto  = 3550*0.80
+    minp = 0.1
+    Rm = 8134/13.4
     g = 9.8066
+
+
     P_out = np.ones((200,1))
     
 
@@ -249,8 +288,8 @@ if __name__ == '__main__':
     plt.plot(h/Units.km,Isp, 'k')
     plt.xlabel('Altitude (km)')
     plt.ylabel('Isp (s)')
-    plt.xlim([1,60])
-    plt.ylim([330,450])
+    plt.xlim([1,120])
+    plt.ylim([300,500])
     
     plt.figure(2)
     plt.plot(h/Units.km, p/101325.)
