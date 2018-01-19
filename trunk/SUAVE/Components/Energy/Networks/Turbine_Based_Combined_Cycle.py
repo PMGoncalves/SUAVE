@@ -111,6 +111,15 @@ class Turbine_Based_Combined_Cycle(Propulsor):
         number_of_engines         = self.number_of_engines
         throttle                  = conditions.propulsion.throttle  
         
+        # Vector init
+        stag_temperature_vector   = 0.0  * conditions.propulsion.throttle  
+        stag_pressure_vector      = 0.0  * conditions.propulsion.throttle  
+        stat_temperature_vector   = 0.0  * conditions.propulsion.throttle    
+        stat_pressure_vector      = 0.0  * conditions.propulsion.throttle  
+        velocity_vector           = 0.0  * conditions.propulsion.throttle  
+        fuel_to_air_vector        = 0.0  * conditions.propulsion.throttle  
+        
+        
         
         # Activate right propulsion
         prop_mode                 = 0.0 
@@ -141,17 +150,47 @@ class Turbine_Based_Combined_Cycle(Propulsor):
         inlet_nozzle.inputs.stagnation_pressure                = ram.outputs.stagnation_pressure
         
         #Flow through the inlet nozzle
-        inlet_nozzle[i_ramjet](conditions)
-        inlet_nozzle.compute_scramjet[i_scramjet](conditions)
+            #   Ramjet 
+            #   run the conditions and retrieve flow properties under ramjet mode
+        inlet_nozzle(conditions)
+        stag_temperature_vector[i_ramjet]                      = inlet_nozzle.outputs.stagnation_temperature[i_ramjet]
+        stag_pressure_vector[i_ramjet]                         = inlet_nozzle.outputs.stagnation_pressure[i_ramjet]
+        
+        
+            #   Scramjet 
+            #   run the conditions and retrieve flow properties under ramjet mode
+        inlet_nozzle.compute_scramjet(conditions)
+        stag_temperature_vector[i_scramjet]                    = inlet_nozzle.outputs.stagnation_temperature[i_scramjet]
+        stag_pressure_vector[i_scramjet]                       = inlet_nozzle.outputs.stagnation_pressure[i_scramjet]
+        
         
         #link the combustor to the inlet nozzle
-        combustor.inputs.stagnation_temperature                = inlet_nozzle.outputs.stagnation_temperature
-        combustor.inputs.stagnation_pressure                   = inlet_nozzle.outputs.stagnation_pressure
+        combustor.inputs.stagnation_temperature                = stag_temperature_vector
+        combustor.inputs.stagnation_pressure                   = stag_pressure_vector
         combustor.inputs.mach_number                           = inlet_nozzle.outputs.mach_number
         
-        #flow through the high pressor comprresor
+       
+        #Flow through the combustor
+            #   Ramjet 
+            #   run the conditions and retrieve flow properties under ramjet mode
         combustor.compute_rayleigh(conditions)
-        
+        stag_temperature_vector[i_ramjet]                      = inlet_nozzle.outputs.stagnation_temperature[i_ramjet]
+        stag_pressure_vector[i_ramjet]                         = inlet_nozzle.outputs.stagnation_pressure[i_ramjet]
+        fuel_to_air_vector[i_ramjet]                           = combustor.outputs.fuel_to_air_ratio[i_ramjet]
+            #   Scramjet 
+            #   run the conditions and retrieve flow properties under ramjet mode
+        combustor.compute_scramjet(conditions)
+        stag_temperature_vector[i_scramjet]                    = combustor.outputs.stagnation_temperature[i_scramjet]
+        stag_pressure_vector[i_scramjet]                       = combustor.outputs.stagnation_pressure[i_scramjet]
+        stat_temperature_vector[i_scramjet]                    = combustor.outputs.static_pressure[i_scramjet]        
+        stat_pressure_vector[i_scramjet]                       = combustor.outputs.static_temperature[i_scramjet]#  
+        velocity_vector[i_scramjet]                            = combustor.outputs.velocity[i_scramjet]
+        fuel_to_air_vector[i_scramjet]                         = combustor.outputs.fuel_to_air_ratio[i_scramjet]
+
+#        
+#        
+#        
+#        
         
         #link the core nozzle to the low pressure turbine
         core_nozzle.inputs.stagnation_temperature              = combustor.outputs.stagnation_temperature
