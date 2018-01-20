@@ -8,5 +8,6 @@ from turbofan_nox_emission_index import turbofan_nox_emission_index
 from electric_motor_sizing import size_from_kv, size_from_mass
 from turbofan_sizing import turbofan_sizing
 from turbojet_sizing import turbojet_sizing
+from rocket_sizing import rocket_sizing
 from fm_id import fm_id
 import electric_motor_sizing
