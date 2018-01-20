@@ -8,6 +8,7 @@ from turbofan_nox_emission_index import turbofan_nox_emission_index
 from electric_motor_sizing import size_from_kv, size_from_mass
 from turbofan_sizing import turbofan_sizing
 from turbojet_sizing import turbojet_sizing
+from turbine_based_combined_cycle_sizing import turbine_based_combined_cycle_sizing
 from ramjet_sizing import ramjet_sizing
 from scramjet_sizing import inlet_conditions, scramjet_sizing
 from oblique_shock import theta_beta_mach, oblique_shock_relation

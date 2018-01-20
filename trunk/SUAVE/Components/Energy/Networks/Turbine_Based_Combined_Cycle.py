@@ -358,20 +358,25 @@ class Turbine_Based_Combined_Cycle(Propulsor):
         
         # Vector init
         fuel_to_air_vector        = 0.0  * conditions.propulsion.throttle  
+        F                         = 0.0  * conditions.propulsion.throttle  
+        mdot                      = 0.0  * conditions.propulsion.throttle  
+        Isp                       = 0.0  * conditions.propulsion.throttle  
         
         
         # Activate right propulsion
-        prop_mode                 = 0.0 
             # turbojet  = 0.0
             # ramjet    = 1.0
             # scramet   = 2.0
+
+        prop_mode                 = 1.0  * conditions.propulsion.throttle  
+
                 
         i_max_throttle            = throttle >= 1.0
         i_max_mode                = prop_mode < 2.0
         
         prop_switch               = np.logical_and(i_max_mode,i_max_throttle)                        
         
-        prop_mode[prop_switch]    = prop_mode[prop_switch] + 1
+        prop_mode[prop_switch]    = prop_mode[prop_switch] + 1.0
           
         #i_turbojet                = prop_mode == 0.0
         i_ramjet                  = prop_mode == 1.0
@@ -407,7 +412,6 @@ class Turbine_Based_Combined_Cycle(Propulsor):
         #flow through the high pressor comprresor
         combustor.compute_rayleigh(conditions)
         
-        
         #link the core nozzle to the low pressure turbine
         core_nozzle.inputs.stagnation_temperature              = combustor.outputs.stagnation_temperature
         core_nozzle.inputs.stagnation_pressure                 = combustor.outputs.stagnation_pressure
@@ -417,23 +421,29 @@ class Turbine_Based_Combined_Cycle(Propulsor):
 
         # compute the thrust using the thrust component
         #link the thrust component to the core nozzle
-        thrust.inputs.core_exit_velocity                       = core_nozzle.outputs.velocity
-        thrust.inputs.core_area_ratio                          = core_nozzle.outputs.area_ratio
-        thrust.inputs.core_nozzle                              = core_nozzle.outputs
+        thrust_rj.inputs.core_exit_velocity                       = core_nozzle.outputs.velocity
+        thrust_rj.inputs.core_area_ratio                          = core_nozzle.outputs.area_ratio
+        thrust_rj.inputs.core_nozzle                              = core_nozzle.outputs
 	
         #link the thrust component to the combustor
-        thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio
+        thrust_rj.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio
 	
         #link the thrust component to the low pressure compressor 
-        thrust.inputs.stag_temp_lpt_exit                       = core_nozzle.outputs.stagnation_temperature
-        thrust.inputs.stag_press_lpt_exit                      = core_nozzle.outputs.stagnation_pressure
-        thrust.inputs.number_of_engines                        = number_of_engines
-        thrust.inputs.flow_through_core                        =  1.0 #scaled constant to turn on core thrust computation
-        thrust.inputs.flow_through_fan                         =  0.0 #scaled constant to turn on fan thrust computation        
+        thrust_rj.inputs.stag_temp_lpt_exit                       = core_nozzle.outputs.stagnation_temperature
+        thrust_rj.inputs.stag_press_lpt_exit                      = core_nozzle.outputs.stagnation_pressure
+        thrust_rj.inputs.number_of_engines                        = number_of_engines
+        thrust_rj.inputs.flow_through_core                        =  1.0 #scaled constant to turn on core thrust computation
+        thrust_rj.inputs.flow_through_fan                         =  0.0 #scaled constant to turn on fan thrust computation        
 
         #compute the thrust
-        thrust(conditions)
+        thrust_rj(conditions)
         
+        F[i_ramjet]         = thrust_rj.outputs.thrust[i_ramjet]
+        mdot[i_ramjet]      = thrust_rj.outputs.fuel_flow_rate[i_ramjet]
+        Isp[i_ramjet]       = thrust_rj.outputs.specific_impulse[i_ramjet] 
+
+        #saving fuel-to-air values 
+        fuel_to_air_vector[i_ramjet]                           = combustor.outputs.fuel_to_air_ratio[i_ramjet]
 
         ###########################################
         #####################################
@@ -476,26 +486,54 @@ class Turbine_Based_Combined_Cycle(Propulsor):
         core_nozzle(conditions)
         
         #link the thrust component to the core nozzle
-        thrust.inputs.core_exit_pressure                       = core_nozzle.outputs.pressure
-        thrust.inputs.core_exit_temperature                    = core_nozzle.outputs.temperature 
-        thrust.inputs.core_exit_velocity                       = core_nozzle.outputs.velocity
-        thrust.inputs.core_area_ratio                          = core_nozzle.outputs.area_ratio
-        thrust.inputs.core_nozzle                              = core_nozzle.outputs
+        thrust_sj.inputs.core_exit_pressure                       = core_nozzle.outputs.pressure
+        thrust_sj.inputs.core_exit_temperature                    = core_nozzle.outputs.temperature 
+        thrust_sj.inputs.core_exit_velocity                       = core_nozzle.outputs.velocity
+        thrust_sj.inputs.core_area_ratio                          = core_nozzle.outputs.area_ratio
+        thrust_sj.inputs.core_nozzle                              = core_nozzle.outputs
 	
         #link the thrust component to the combustor
-        thrust.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio
+        thrust_sj.inputs.fuel_to_air_ratio                        = combustor.outputs.fuel_to_air_ratio
 	
         #link the thrust component to the low pressure compressor 
-        thrust.inputs.stag_temp_lpt_exit                       = core_nozzle.outputs.stagnation_temperature
-        thrust.inputs.stag_press_lpt_exit                      = core_nozzle.outputs.stagnation_pressure
-        thrust.inputs.number_of_engines                        = number_of_engines
-        thrust.inputs.flow_through_core                        =  1.0 #scaled constant to turn on core thrust computation
-        thrust.inputs.flow_through_fan                         =  0.0 #scaled constant to turn on fan thrust computation        
+        thrust_sj.inputs.stag_temp_lpt_exit                       = core_nozzle.outputs.stagnation_temperature
+        thrust_sj.inputs.stag_press_lpt_exit                      = core_nozzle.outputs.stagnation_pressure
+        thrust_sj.inputs.number_of_engines                        = number_of_engines
+        thrust_sj.inputs.flow_through_core                        =  1.0 #scaled constant to turn on core thrust computation
+        thrust_sj.inputs.flow_through_fan                         =  0.0 #scaled constant to turn on fan thrust computation        
 
         #compute the thrust
-        thrust.compute_stream_thrust(conditions)
+        thrust_sj.compute_stream_thrust(conditions)
+        
+        #saving fuel-to-air values 
+        fuel_to_air_vector[i_scramjet]                           = combustor.outputs.fuel_to_air_ratio[i_scramjet]
+        
+        #getting the network outputs from the thrust outputs
+        F[i_scramjet]         = thrust_sj.outputs.thrust[i_scramjet]
+        mdot[i_scramjet]      = thrust_sj.outputs.fuel_flow_rate[i_scramjet]
+        Isp[i_scramjet]       = thrust_sj.outputs.specific_impulse[i_scramjet] 
+        
+        
+        
+        ###############################
+        #############################
+        ############################
+        ###########################
+        
+        
+        F            = F*[1,0,0]
+        F_vec        = conditions.ones_row(3) * 0.0
+        F_vec[:,0]   = F[:,0]
+        F            = F_vec
 
+        results = Data()
+        results.thrust_force_vector = F
+        results.vehicle_mass_rate   = mdot
+  
 
+        return results
+
+      
     def size(self,state):  
         
         """ Size the ramjet

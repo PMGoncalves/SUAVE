@@ -13,4 +13,5 @@ from Solar_Low_Fidelity import Solar_Low_Fidelity
 from Dual_Battery_Ducted_Fan import Dual_Battery_Ducted_Fan
 from Ramjet import Ramjet
 from Scramjet import Scramjet
+from Turbine_Based_Combined_Cycle import Turbine_Based_Combined_Cycle
 from Propulsor_Surrogate import Propulsor_Surrogate
