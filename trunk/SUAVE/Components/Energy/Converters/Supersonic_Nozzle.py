@@ -16,6 +16,9 @@ from SUAVE.Core import Units
 
 # package imports
 import numpy as np
+import scipy as sp
+from scipy.optimize import fsolve
+from warnings import warn
 
 from SUAVE.Components.Energy.Energy_Component import Energy_Component
 from SUAVE.Methods.Propulsion.fm_id import fm_id
@@ -170,6 +173,74 @@ class Supersonic_Nozzle(Energy_Component):
         self.outputs.static_pressure         = P_out
         self.outputs.area_ratio              = area_ratio
             
-    
+        
+        
+    def compute_rocket(self,conditions):
+        """This computes the output values from the input values according to
+        equations from the source.
+        
+        Assumptions:
+        
+        
+        Source:
+        
+        
+        Inputs:
+        """           
+        
+        #unpack the values
+        
+        #unpack from conditions
+        Po       = conditions.freestream.pressure
+        R        = conditions.freestream.universal_gas_constant
+        
+        #unpack from inputs
+        Tt_in    = self.inputs.stagnation_temperature
+        Pt_in    = self.inputs.stagnation_pressure
+        gamma    = self.inputs.isentropic_expansion_factor
+        Rm       = self.inputs.specific_gas_constant
+        Cp       = self.inputs.specific_heat_constant_pressure
+        
+        #unpack from self
+        exp_ratio  = self.expansion_ratio
+#        pid        = self.pressure_ratio
+#        etapold    = self.polytropic_efficiency
+        
+        # -- Calculating flow properties
+        
+        # Vandenkerckhove function
+        a = gamma
+        b = ((1+gamma)/2)**((1+gamma)/(1-gamma))        
+        Gf = np.sqrt(a*b)
+        
+        # P_out calculation
+        a = Gf
+        b = 2*gamma/(gamma-1)
+        
+        
+        func = lambda P_out : exp_ratio - (  a / ( np.sqrt(b * (P_out/Pt_in)**(2/gamma) * (1-(P_out/Pt_in)**((gamma-1)/gamma)))))
+        P_out = fsolve(func,Po,factor = 0.01)
+
+        # in case pressures go too low
+        if np.any(P_out<0.4*Po):
+            warn('P_out goes too low',RuntimeWarning)
+            P_out[P_out<0.4*Po] = 0.4*Po[P_out<0.4*Po]
+
+        # Calculate other flow properties
+        Pt_out = Pt_in #possibly add pressure ratio
+        Tt_out = Tt_in #possibly add adiabatic efficiency
+        u_out  = np.sqrt((2/(gamma-1))*(Rm)*Tt_out * (1 - (P_out/Pt_out)**((gamma-1)/gamma)))
+        
+        T_out  = Tt_out - u_out*u_out/(2*Cp)       
+        Mach   = u_out / np.sqrt(gamma*Rm*T_out)
+
+        
+        #pack computed quantities into outputs
+        self.outputs.stagnation_temperature  = Tt_out
+        self.outputs.stagnation_pressure     = Pt_out
+        self.outputs.velocity                = u_out
+        self.outputs.static_pressure         = P_out
+        self.outputs.mach_number             = Mach
+
 
     __call__ = compute

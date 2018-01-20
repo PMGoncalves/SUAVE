@@ -135,5 +135,61 @@ class Combustor(Energy_Component):
         self.outputs.fuel_to_air_ratio       = f 
     
     
+    def compute_rocket(self,conditions):
+        """ This computes the output values from the input values according to
+        equations from the source.
+
+        Assumptions:
+
+        Source:
+
+        Inputs:
+
+        """         
+        # -- unpack the values
+        
+        # unpacking the values from conditions
+        To       = conditions.freestream.temperature
+        R        = conditions.freestream.universal_gas_constant
+        
+        # unpacking values from self
+        fuel     = self.fuel_data
+        oxidizer = self.oxidizer_data
+        scale    = self.scaling_factor
+        Pt_comb  = self.inputs.stagnation_pressure
+        OF       = self.oxidizer_fuel_ratio
+        
+        OF       = 6.0
+        # method to compute combustor properties
+
+        # Initialize arrays
+        Tt_ad_flame  = 1.0 * To / To  # Adiabatic flame temperature
+        gamma        = 1.0 * To / To  # gas gamma
+        Mw           = 1.0 * To / To  # gas molar weight
+        OF_opt       = 6 * To / To   # optimum OF
+        Tt_comb      = 1.0 * To / To  # Adiabatic flame temperature
+        
+        Tt_ad_flame = 3330. #function
+        gamma       = 1.4   # function
+        Mw          = 13.3  # function
+        OF_opt      = 6.0   # function
+        
+
+        # Scaling factor: combustion temperature is always lower than adiabatic flame temperature
+        scale = .8
+        Tt_comb = scale * Tt_ad_flame
+        
+        # pack outputs
+        Rm  = R/Mw
+        Cp  = gamma/(gamma-1)*Rm
+        
+        # pack computed quantities into outputs
+        self.outputs.stagnation_temperature             = Tt_comb
+        self.outputs.stagnation_pressure                = Pt_comb
+        self.outputs.oxidizer_fuel_ratio                = OF 
+        self.outputs.isentropic_expansion_factor        = gamma
+        self.outputs.specific_gas_constant               = Rm
+        self.outputs.specific_heat_constant_pressure    = Cp
     
+        
     __call__ = compute
