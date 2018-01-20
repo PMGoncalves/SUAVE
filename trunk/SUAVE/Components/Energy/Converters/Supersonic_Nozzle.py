@@ -192,7 +192,6 @@ class Supersonic_Nozzle(Energy_Component):
         
         #unpack from conditions
         Po       = conditions.freestream.pressure
-        R        = conditions.freestream.universal_gas_constant
         
         #unpack from inputs
         Tt_in    = self.inputs.stagnation_temperature
@@ -206,6 +205,9 @@ class Supersonic_Nozzle(Energy_Component):
 #        pid        = self.pressure_ratio
 #        etapold    = self.polytropic_efficiency
         
+
+        # initialize array
+        P_out = 1.0*Po/Po
         # -- Calculating flow properties
         
         # Vandenkerckhove function
@@ -219,8 +221,9 @@ class Supersonic_Nozzle(Energy_Component):
         
         
         func = lambda P_out : exp_ratio - (  a / ( np.sqrt(b * (P_out/Pt_in)**(2/gamma) * (1-(P_out/Pt_in)**((gamma-1)/gamma)))))
-        P_out = fsolve(func,Po,factor = 0.01)
+        P_out[:,0] = fsolve(func,Po[:,0],factor = 0.01)
 
+        print 'POUT SIZE', np.shape(P_out)
         # in case pressures go too low
         if np.any(P_out<0.4*Po):
             warn('P_out goes too low',RuntimeWarning)
@@ -236,11 +239,14 @@ class Supersonic_Nozzle(Energy_Component):
 
         
         #pack computed quantities into outputs
-        self.outputs.stagnation_temperature  = Tt_out
-        self.outputs.stagnation_pressure     = Pt_out
-        self.outputs.velocity                = u_out
-        self.outputs.static_pressure         = P_out
-        self.outputs.mach_number             = Mach
-
+        self.outputs.stagnation_temperature             = Tt_out
+        self.outputs.stagnation_pressure                = Pt_out
+        self.outputs.velocity                           = u_out
+        self.outputs.static_pressure                    = P_out
+        self.outputs.mach_number                        = Mach
+        self.outputs.expansion_ratio                    = exp_ratio
+        self.outputs.isentropic_expansion_factor        = gamma
+        self.outputs.specific_gas_constant              = Rm
+        self.outputs.specific_heat_constant_pressure    = Cp
 
     __call__ = compute

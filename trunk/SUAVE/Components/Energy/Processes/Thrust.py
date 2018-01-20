@@ -75,7 +75,6 @@ class Thrust(Energy_Component):
         self.outputs.power                            = 0.0
         self.design_thrust                            = 0.0
         self.mass_flow_rate_design                    = 0.0
-        self.mdot_core                                = 1.0
 
 	
  
@@ -344,7 +343,7 @@ class Thrust(Energy_Component):
         ##--------Ideal rocket theory---------------------------------
         P_out       = core_nozzle.static_pressure
         u_out       = core_nozzle.velocity
-        exp_ratio   = core_nozzle.expansition_ratio
+        exp_ratio   = core_nozzle.expansion_ratio
         
         # Initialize arrays
         Isp         = 1.0 * Po/Po
@@ -356,22 +355,27 @@ class Thrust(Energy_Component):
         c = (1 - (P_out/Pt)**((gamma-1)/gamma))
         d = ((P_out - Po)/(Pt))*exp_ratio                
         CF = np.sqrt(a*b*c)+d
+        
+        print 'P out PO Pt Exp', np.shape(P_out), np.shape(Po), np.shape(Pt), np.shape(exp_ratio)
 
         # CD
         a = 2/(gamma + 1)
         b = (gamma+1)/(2*(gamma-1))
         c = np.sqrt((gamma)/(Rm*Tt))
         CD = (a**b)*c
+        
+        print 'CF', np.shape(CF)
+        print 'CD', np.shape(CD)
+
              
         # Calculate specific impulse and specific thrust
         
         Isp = CF/(CD*g)
-        Fsp = u_out + (1/CD)*(P_out - Po)*exp_ratio / Po
+        Fsp = Isp*g
         
-        
-    
+        print 'Fsp', np.shape(Fsp)
         #computing the dimensional thrust
-        FD2              = Fsp*mdot_design*no_eng*throttle
+        FD2              = mdot_design*no_eng*throttle*Fsp
      
         
         # --Oxidizer and fuel
@@ -393,6 +397,8 @@ class Thrust(Energy_Component):
         self.outputs.fuel_flow_rate                    = mdot_fuel 
         self.outputs.oxidizer_flow_rate                = mdot_ox    
         self.outputs.power                             = power  
+        
+        print '++++++++++++++++++++++++++++++++', np.shape(FD2)
 
     def size_rocket(self,conditions):
         """Sizes the core flow for the design condition.
@@ -405,7 +411,6 @@ class Thrust(Energy_Component):
 
         """             
         #unpack inputs
-        a0                   = conditions.freestream.speed_of_sound
         throttle             = 1.0
         
         #unpack from self
@@ -418,10 +423,11 @@ class Thrust(Energy_Component):
         #unpack results 
         Fsp                         = self.outputs.specific_thrust
 
-                
+        print 'fsp aqui', Fsp       
         #compute dimensional mass flow rates
         mdot_core                   = design_thrust/(Fsp*no_eng*throttle)  
     
+        print 'mdot_core', mdot_core
         #pack outputs
         self.mass_flow_rate_design               = mdot_core
     

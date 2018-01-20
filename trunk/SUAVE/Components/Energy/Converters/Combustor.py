@@ -150,13 +150,12 @@ class Combustor(Energy_Component):
         
         # unpacking the values from conditions
         To       = conditions.freestream.temperature
-        R        = conditions.freestream.universal_gas_constant
         
         # unpacking values from self
-        fuel     = self.fuel_data
-        oxidizer = self.oxidizer_data
+#        fuel     = self.fuel_data
+#        oxidizer = self.oxidizer_data
         scale    = self.scaling_factor
-        Pt_comb  = self.inputs.stagnation_pressure
+        Pt_comb  = self.stagnation_pressure
         OF       = self.oxidizer_fuel_ratio
         
         OF       = 6.0
@@ -164,10 +163,10 @@ class Combustor(Energy_Component):
 
         # Initialize arrays
         Tt_ad_flame  = 1.0 * To / To  # Adiabatic flame temperature
-        gamma        = 1.0 * To / To  # gas gamma
-        Mw           = 1.0 * To / To  # gas molar weight
+        gamma        = 1.20438044 * To / To  # gas gamma
+        Mw           = 13.60087 * To / To  # gas molar weight
         OF_opt       = 6 * To / To   # optimum OF
-        Tt_comb      = 1.0 * To / To  # Adiabatic flame temperature
+        Tt_comb      = 3629.8 * To / To  # Adiabatic flame temperature
         
         Tt_ad_flame = 3330. #function
         gamma       = 1.4   # function
@@ -180,7 +179,7 @@ class Combustor(Energy_Component):
         Tt_comb = scale * Tt_ad_flame
         
         # pack outputs
-        Rm  = R/Mw
+        Rm  = 8134./Mw
         Cp  = gamma/(gamma-1)*Rm
         
         # pack computed quantities into outputs

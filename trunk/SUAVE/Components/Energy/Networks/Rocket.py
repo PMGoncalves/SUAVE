@@ -100,8 +100,8 @@ class Rocket(Propulsor):
         number_of_engines         = self.number_of_engines        
         
         #Creating the network by manually linking the different components
-        combustor.oxidizer_data                               = self.oxidizer
-        combustor.fuel_data                                   = self.fuel
+#        combustor.oxidizer_data                               = self.oxidizer
+#        combustor.fuel_data                                   = self.fuel
           
         #flow through combustor
         combustor.compute_rocket(conditions)
@@ -122,10 +122,10 @@ class Rocket(Propulsor):
         thrust.inputs.oxidizer_fuel_ratio                   = combustor.outputs.oxidizer_fuel_ratio
         thrust.inputs.number_of_engines                     = number_of_engines
         thrust.inputs.core_nozzle                           = nozzle.outputs
-        thrust.inputs.stagnation_temperature                = combustor.outputs.stagnation_temperature
-        thrust.inputs.stagnation_pressure                   = combustor.outputs.stagnation_pressure
-        thrust.inputs.isentropic_expansion_factor           = combustor.outputs.isentropic_expansion_factor
-        thrust.inputs.specific_gas_constant                 = combustor.outputs.specific_gas_constant
+        thrust.inputs.stagnation_temperature                = nozzle.outputs.stagnation_temperature
+        thrust.inputs.stagnation_pressure                   = nozzle.outputs.stagnation_pressure
+        thrust.inputs.isentropic_expansion_factor           = nozzle.outputs.isentropic_expansion_factor
+        thrust.inputs.specific_gas_constant                 = nozzle.outputs.specific_gas_constant
 
 
         #compute the thrust
@@ -168,7 +168,7 @@ class Rocket(Propulsor):
         nozzle.inputs.stagnation_pressure                   = combustor.outputs.stagnation_pressure
         nozzle.inputs.isentropic_expansion_factor           = combustor.outputs.isentropic_expansion_factor
         nozzle.inputs.specific_gas_constant                 = combustor.outputs.specific_gas_constant 
-        nozzle.outputs.specific_heat_constant_pressure      = combustor.outputs.specific_heat_constant_pressure    
+        nozzle.inputs.specific_heat_constant_pressure       = combustor.outputs.specific_heat_constant_pressure    
 
         #flow through the core nozzle
         nozzle.compute_rocket(conditions)
