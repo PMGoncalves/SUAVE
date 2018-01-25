@@ -394,7 +394,7 @@ class Thrust(Energy_Component):
         self.outputs.specific_thrust                   = Fsp
         self.outputs.specific_impulse                  = Isp
         self.outputs.core_mass_flow_rate               = mdot_design*throttle
-        self.outputs.fuel_flow_rate                    = mdot_fuel 
+        self.outputs.fuel_flow_rate                    = mdot_fuel + mdot_ox
         self.outputs.oxidizer_flow_rate                = mdot_ox    
         self.outputs.power                             = power  
         

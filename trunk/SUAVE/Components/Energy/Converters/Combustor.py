@@ -187,7 +187,7 @@ class Combustor(Energy_Component):
         self.outputs.stagnation_pressure                = Pt_comb
         self.outputs.oxidizer_fuel_ratio                = OF 
         self.outputs.isentropic_expansion_factor        = gamma
-        self.outputs.specific_gas_constant               = Rm
+        self.outputs.specific_gas_constant              = Rm
         self.outputs.specific_heat_constant_pressure    = Cp
     
         
