@@ -10,6 +10,7 @@ from turbofan_sizing import turbofan_sizing
 from turbojet_sizing import turbojet_sizing
 from ramjet_sizing import ramjet_sizing
 from scramjet_sizing import scramjet_sizing
+from dmr_sizing import dmr_sizing
 from fm_id import fm_id
 from fm_solver import fm_solver
 from rayleigh import rayleigh

@@ -195,7 +195,6 @@ class Combustor(Energy_Component):
           fuel_data.specific_energy           [J/kg]
         """         
         # unpack the values
-        print 'Combustor -----'
         # unpacking the values from conditions
         gamma  = conditions.freestream.isentropic_expansion_factor 
         Cp     = conditions.freestream.specific_heat_at_constant_pressure
@@ -325,7 +324,7 @@ class Combustor(Energy_Component):
         # unpacking values from self    
             #-- Fuel
         htf    = self.fuel_data.specific_energy
-        f      = self.fuel_data.stoichiometric_air
+        f_st   = self.fuel_data.stoichiometric_air
         
             #-- Combustion process
         eta_b  = self.efficiency
@@ -345,17 +344,21 @@ class Combustor(Energy_Component):
         
         
         # Initialize
-        np.set_printoptions(threshold=np.nan)
+        f       = f_st*np.ones_like(Tt_in)
            
         V_out   = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
         Tt_out  = (T_in/(1+f))*(1+(1/(Cpb*T_in))*(eta_b*f*htf+f*hf+f*Cpb*Tref+(1+f*(Vf_V3)**2)*V_in**2/2))
         T_out   = Tt_out - V_out**2/(2*Cpb)   
         M_out   = V_out/np.sqrt(gamma*R*T_out)
         
-        
+#        i_merda = M_out < 1.0
+#        M = conditions.freestream.mach_number * Pt_in/Pt_in
+#        print 'M erro :', M[i_merda]
+#        
         if np.any(M_out<1.0):
             warn('Subsonic combustion, higher Mach required',RuntimeWarning)
-            M_out[M_out<1.0] = 1.0
+            M_out[M_out<1.0] = 0.01
+            f[M_out < 1.0] = 0.0
 
         # Computing the exit static and stagnation conditions
         ht_out  = Cp*Tt_out
