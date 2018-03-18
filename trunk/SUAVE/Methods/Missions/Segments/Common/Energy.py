@@ -82,5 +82,10 @@ def update_thrust(segment,state):
     conditions.frames.body.thrust_force_vector = results.thrust_force_vector
     conditions.weights.vehicle_mass_rate       = results.vehicle_mass_rate
     
-
+    # debug conditions
+    conditions.propulsion.fsp                  = results.fsp
+    conditions.propulsion.mdot_core            = results.mdot_core
+    conditions.propulsion.tsfc                 = results.tsfc
+    conditions.propulsion.f                    = results.f
+    conditions.propulsion.isp                  = results.specific_impulse
     
