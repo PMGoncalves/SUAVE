@@ -14,6 +14,7 @@ import SUAVE
 
 import numpy as np
 from scipy.optimize import fsolve
+from warnings import warn
 
 from SUAVE.Core import Data
 from SUAVE.Components.Energy.Energy_Component import Energy_Component
@@ -57,20 +58,29 @@ class Combustor(Energy_Component):
         self.tag = 'Combustor'
         
         #-----setting the default values for the different components
-        self.fuel_data                       = SUAVE.Attributes.Propellants.Jet_A()
-        self.alphac                          = 0.0
-        self.turbine_inlet_temperature       = 1.0
-        self.inputs.stagnation_temperature   = 1.0
-        self.inputs.stagnation_pressure      = 1.0
-        self.inputs.static_pressure          = 1.0
-        self.inputs.mach_number              = 0.1
-        self.outputs.stagnation_temperature  = 1.0
-        self.outputs.stagnation_pressure     = 1.0
-        self.outputs.static_pressure         = 1.0
-        self.outputs.stagnation_enthalpy     = 1.0
-        self.outputs.fuel_to_air_ratio       = 1.0
-        self.fuel_data                       = Data()
-        self.area_ratio                      = 1.0
+        self.fuel_data                          = SUAVE.Attributes.Propellants.Jet_A()
+        self.alphac                             = 0.0
+        self.turbine_inlet_temperature          = 1.0
+        self.inputs.stagnation_temperature      = 1.0
+        self.inputs.stagnation_pressure         = 1.0
+        self.inputs.static_pressure             = 1.0
+        self.inputs.mach_number                 = 0.1
+        self.outputs.stagnation_temperature     = 1.0
+        self.outputs.stagnation_pressure        = 1.0
+        self.outputs.static_pressure            = 1.0
+        self.outputs.stagnation_enthalpy        = 1.0
+        self.outputs.fuel_to_air_ratio          = 1.0
+        self.fuel_data                          = Data()
+        self.area_ratio                         = 1.0
+        self.specific_heat_at_constant_pressure = 1510.
+        self.isentropic_expansion_factor        = 1.238
+        self.axial_fuel_velocity_ratio          = 0.5
+        self.fuel_velocity_ratio                = 0.5
+        self.burner_drag_coefficient            = 0.1
+        self.temperature_reference              = 222.
+        self.hf                                 = 0.
+
+
     
     def compute(self,conditions):
         """ This computes the output values from the input values according to
@@ -253,6 +263,115 @@ class Combustor(Energy_Component):
         self.outputs.stagnation_enthalpy     = ht_out
         self.outputs.fuel_to_air_ratio       = f    
         self.outputs.mach_number             = M_out
+  
+
+    def compute_scramjet(self,conditions):
+        """ This computes the output values from the input values according to
+        equations from the source.
+
+        Assumptions:
+        Constant efficiency and pressure ratio
+
+        Source:
+        https://web.stanford.edu/~cantwell/AA283_Course_Material/AA283_Course_Notes/
+
+        Inputs:
+        conditions.freestream.
+          isentropic_expansion_factor         [-]
+          specific_heat_at_constant_pressure  [J/(kg K)]
+          temperature                         [K]
+          stagnation_temperature              [K]
+        self.inputs.
+          stagnation_temperature              [K]
+          stagnation_pressure                 [Pa]
+
+        Outputs:
+        self.outputs.
+          stagnation_temperature              [K]  
+          stagnation_pressure                 [Pa]
+          stagnation_enthalpy                 [J/kg]
+          fuel_to_air_ratio                   [-]
+
+        Properties Used:
+        self.
+          turbine_inlet_temperature           [K]
+          pressure_ratio                      [-]
+          efficiency                          [-]
+          axial_fuel_velocity_ratio           [-]
+          fuel_velocity_ratio                 [-]
+          burner_drag_coefficient             [-]
+          temperature_reference               [K]
+          Cpb                                 [-]
+          hf
+        """         
+        # unpack the values
         
+        # unpacking the values from conditions
+        gamma  = conditions.freestream.isentropic_expansion_factor 
+        Cp     = conditions.freestream.specific_heat_at_constant_pressure
+        To     = conditions.freestream.temperature
+        Tto    = conditions.freestream.stagnation_temperature
+        R      = conditions.freestream.gas_specific_constant
+        
+        # unpacking the values form inputs
+        Tt_in  = self.inputs.stagnation_temperature
+        Pt_in  = self.inputs.stagnation_pressure
+        Tt_4   = self.turbine_inlet_temperature
+        M_in   = self.inputs.mach_number
+        T_in   = self.inputs.static_temperature
+        V_in   = self.inputs.velocity
+        P_in   = self.inputs.static_pressure
+        
+        # unpacking values from self    
+            #-- Fuel
+        htf    = self.fuel_data.specific_energy
+        f      = self.fuel_data.stoichiometric_air
+        
+            #-- Combustion process
+        eta_b  = self.efficiency
+        Vfx_V3 = self.axial_fuel_velocity_ratio
+        Vf_V3  = self.fuel_velocity_ratio
+        CfAwA3 = self.burner_drag_coefficient
+        Tref   = self.temperature_reference
+        hf     = self.hf
+        
+            #-- Combustor losses
+        pid    = self.pressure_ratio
+        
+            #-- Gas properties
+                #-- New flow properties --not computed, these values should change considerably
+        Cpb    = self.specific_heat_at_constant_pressure
+        gamma  = self.isentropic_expansion_factor 
+        
+        
+        # Initialize
+        np.set_printoptions(threshold=np.nan)
+           
+        V_out   = V_in*(((1+f*Vfx_V3)/(1+f))-(CfAwA3/(2*(1+f))))
+        Tt_out  = (T_in/(1+f))*(1+(1/(Cpb*T_in))*(eta_b*f*htf+f*hf+f*Cpb*Tref+(1+f*(Vf_V3)**2)*V_in**2/2))
+        T_out   = Tt_out - V_out**2/(2*Cpb)   
+        M_out   = V_out/np.sqrt(gamma*R*T_out)
+        
+        
+        if np.any(M_out<1.0):
+            warn('Subsonic combustion, higher Mach required',RuntimeWarning)
+            M_out[M_out<1.0] = 1.0
+
+        # Computing the exit static and stagnation conditions
+        ht_out  = Cp*Tt_out
+        P_out   = P_in
+        Pt_out  = P_out*(1+(gamma-1)/2*M_out**2)**(gamma/(gamma-1))
+        
+        # pack computed quantities into outputs
+        self.outputs.stagnation_temperature  = Tt_out
+        self.outputs.stagnation_pressure     = Pt_out
+        self.outputs.stagnation_enthalpy     = ht_out
+        self.outputs.fuel_to_air_ratio       = f
+        self.outputs.static_temperature      = T_out
+        self.outputs.static_pressure         = P_out
+        self.outputs.velocity                = V_out
+        self.outputs.mach_number             = M_out
+        
+      
     __call__ = compute
     

@@ -172,4 +172,81 @@ class Compression_Nozzle(Energy_Component):
         self.outputs.static_enthalpy         = h_out
         self.outputs.velocity                = u_out
         
+        
+    def compute_scramjet(self,conditions):
+        """ This computes the output values from the input values according to
+        equations from the source.
+
+        Assumptions:
+        Constant polytropic efficiency and pressure ratio
+
+
+
+        Inputs:
+        conditions.freestream.
+          isentropic_expansion_factor         [-]
+          specific_heat_at_constant_pressure  [J/(kg K)]
+          pressure                            [Pa]
+          universal_gas_constant              [J/(kg K)] (this is misnamed - actually refers to the gas specific constant)
+        self.inputs.
+          stagnation_temperature              [K]
+          stagnation_pressure                 [Pa]
+
+        Outputs:
+        self.outputs.
+          stagnation_temperature              [K]  
+          stagnation_pressure                 [Pa]
+          stagnation_enthalpy                 [J/kg]
+          mach_number                         [-]
+          static_temperature                  [K]
+          static_enthalpy                     [J/kg]
+          velocity                            [m/s]
+
+        Properties Used:
+        self.
+          adiabatic_efficiency                [-]
+          ob_count                            [-]
+          theta                               [rad]
+        """           
+        #unpack the values
+        
+        #unpack from conditions
+        gamma   = conditions.freestream.isentropic_expansion_factor
+        Cp      = conditions.freestream.specific_heat_at_constant_pressure
+        Po      = conditions.freestream.pressure
+        To      = conditions.freestream.temperature
+        Mo      = conditions.freestream.mach_number
+        R       = conditions.freestream.gas_specific_constant
+        Vo      = conditions.freestream.velocity
+        
+        #unpack from inpust
+        Tt_in   = self.inputs.stagnation_temperature
+        Pt_in   = self.inputs.stagnation_pressure
+        
+        #unpack from self
+        eta     =   self.adiabatic_efficiency
+        psi     =   self.cycle_static_temperature
+        
+        #Method to compute the output variables
+        Mach    = np.sqrt(2/(gamma-1.)*(psi**-1*(1.+(gamma-1.)/2.*Mo**2)-1))
+        P_out   = Po*(psi/(psi*(1-eta)+eta))**(Cp/R)
+        u_out   = (np.sqrt(Vo**2-2*Cp*To*(psi-1)))
+        T_out   = psi*To
+        h_out   = Cp*T_out
+        
+        Tt_out  = Tt_in
+        Pt_out  = P_out*(1+(gamma-1)/2*Mach**2)**(gamma/(gamma-1))
+        ht_out  = Cp*Tt_out
+
+        #pack computed quantities into outputs
+        self.outputs.stagnation_temperature  = Tt_out
+        self.outputs.stagnation_pressure     = Pt_out
+        self.outputs.stagnation_enthalpy     = ht_out
+        self.outputs.mach_number             = Mach
+        self.outputs.static_temperature      = T_out
+        self.outputs.static_enthalpy         = h_out
+        self.outputs.velocity                = u_out
+        self.outputs.static_pressure         = P_out 
+        
+        
     __call__ = compute

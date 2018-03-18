@@ -159,20 +159,29 @@ class Thrust(Energy_Component):
         Tref                 = self.reference_temperature
         Pref                 = self.reference_pressure
         mdhc                 = self.compressor_nondimensional_massflow
-
-        
+        stream_thrust        = self.stream_thrust    
     
-        ##--------Cantwell method---------------------------------
+        if stream_thrust :
+            ##--------Stream thrust method ---------------------------        
+            R                       = conditions.freestream.gas_specific_constant
+            T0                      = conditions.freestream.temperature
+            core_exit_temperature   = self.inputs.core_nozzle.temperature
+            
+            Sa0     = u0*(1+R*T0/u0**2)
+            Sa_exit = core_exit_velocity*(1+R*core_exit_temperature/core_exit_velocity**2)
+    
+            Fsp      = ((1+f)*Sa_exit - Sa0 - R*T0/u0*(core_area_ratio-1))/a0
         
-
-        # computing the non dimensional thrust
-        core_thrust_nondimensional  = flow_through_core*(gamma*M0*M0*(core_nozzle.velocity/u0-1.) + core_area_ratio*(core_nozzle.static_pressure/p0-1.))
-        fan_thrust_nondimensional   = flow_through_fan*(gamma*M0*M0*(fan_nozzle.velocity/u0-1.) + fan_area_ratio*(fan_nozzle.static_pressure/p0-1.))
+        else:     
+            ##--------Cantwell method---------------------------------
         
-        Thrust_nd                   = core_thrust_nondimensional + fan_thrust_nondimensional
-      
+            # computing the non dimensional thrust
+            core_thrust_nondimensional  = flow_through_core*(gamma*M0*M0*(core_nozzle.velocity/u0-1.) + core_area_ratio*(core_nozzle.static_pressure/p0-1.))
+            fan_thrust_nondimensional   = flow_through_fan*(gamma*M0*M0*(fan_nozzle.velocity/u0-1.) + fan_area_ratio*(fan_nozzle.static_pressure/p0-1.))
+        
+            Thrust_nd                   = core_thrust_nondimensional + fan_thrust_nondimensional
      
-        Fsp              = 1./(gamma*M0)*Thrust_nd
+            Fsp              = 1./(gamma*M0)*Thrust_nd
     
 
         # computing the specific impulse
@@ -252,6 +261,7 @@ class Thrust(Energy_Component):
         no_eng                      = self.inputs.number_of_engines
         
         # compute nondimensional thrust
+        
         self.compute(conditions)
         
         # unpack results 
@@ -266,6 +276,8 @@ class Thrust(Energy_Component):
         self.compressor_nondimensional_massflow  = mdhc   
         
         return
+    
+
     
     __call__ = compute         
 
