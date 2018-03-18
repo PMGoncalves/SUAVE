@@ -203,10 +203,23 @@ class Turbojet_Super(Propulsor):
         F_vec[:,0]   = F[:,0]
         F            = F_vec
 
-        results = Data()
+        #-- debug parameters
+        f            = combustor.outputs.fuel_to_air_ratio
+        TSFC         = thrust.outputs.thrust_specific_fuel_consumption
+        real_fsp     = thrust.outputs.non_dimensional_thrust * conditions.freestream.speed_of_sound
+        mdot_core    = thrust.outputs.core_mass_flow_rate
+
+        results                     = Data()
         results.thrust_force_vector = F
         results.vehicle_mass_rate   = mdot
+        results.specific_impulse    = Isp
         
+        #-- new results
+        results.fsp                 = real_fsp
+        results.mdot_core           = mdot_core
+        results.tsfc                = TSFC
+        results.f                   = f
+	
         return results
     
     def size(self,state):  

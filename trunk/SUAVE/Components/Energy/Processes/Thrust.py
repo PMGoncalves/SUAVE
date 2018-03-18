@@ -72,6 +72,7 @@ class Thrust(Energy_Component):
         self.outputs.fuel_mass                        = 0.0
         self.outputs.power                            = 0.0
         self.design_thrust                            = 0.0
+        self.stream_thrust                            = False
         self.mass_flow_rate_design                    = 0.0
 
 	
