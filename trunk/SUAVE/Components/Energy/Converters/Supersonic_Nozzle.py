@@ -250,6 +250,7 @@ class Supersonic_Nozzle(Energy_Component):
         #--Getting the output stagnation quantities
         Pt_out   = Pt_in*pid
         Tt_out   = Tt_in*pid**((gamma-1.)/(gamma)*etapold)
+        
         ht_out   = Cp*Tt_out
   
         # Method for computing the nozzle properties
@@ -324,6 +325,7 @@ class Supersonic_Nozzle(Energy_Component):
         h_out   = Cp*T_out
         u_out   = M_out*np.sqrt(gamma*R*T_out)
         rho_out = P_out/(R*T_out)
+        
 
         #pack computed quantities into outputs
         self.outputs.stagnation_temperature  = Tt_out

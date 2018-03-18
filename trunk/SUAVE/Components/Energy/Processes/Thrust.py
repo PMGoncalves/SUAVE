@@ -173,6 +173,7 @@ class Thrust(Energy_Component):
       
      
         Fsp              = 1./(gamma*M0)*Thrust_nd
+    
 
         # computing the specific impulse
         Isp              = Fsp*a0*(1.+bypass_ratio)/(f*g)
@@ -184,6 +185,7 @@ class Thrust(Energy_Component):
         mdot_core        = mdhc*np.sqrt(Tref/total_temperature_reference)*(total_pressure_reference/Pref)
 
         # computing the dimensional thrust
+
         FD2              = Fsp*a0*(1+bypass_ratio)*mdot_core*no_eng*throttle
 
      
@@ -194,6 +196,10 @@ class Thrust(Energy_Component):
         
         # computing the power 
         power            = FD2*u0
+        
+        
+
+        
         
         # pack outputs
         self.outputs.thrust                            = FD2 
