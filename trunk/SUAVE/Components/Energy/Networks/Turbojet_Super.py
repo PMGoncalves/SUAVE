@@ -149,6 +149,10 @@ class Turbojet_Super(Propulsor):
         #link the high pressuer turbine to the high pressure compressor
         high_pressure_turbine.inputs.compressor                = high_pressure_compressor.outputs
         
+        high_pressure_turbine.inputs.bypass_ratio = 0.0
+        high_pressure_turbine.inputs.fan = Data()
+        high_pressure_turbine.inputs.fan.work_done = 0.0
+        
         #flow through the high pressure turbine
         high_pressure_turbine(conditions)
                 
@@ -163,7 +167,10 @@ class Turbojet_Super(Propulsor):
         low_pressure_turbine.inputs.fuel_to_air_ratio          = combustor.outputs.fuel_to_air_ratio
 	
         #get the bypass ratio from the thrust component
-        low_pressure_turbine.inputs.bypass_ratio               = 0.0
+        low_pressure_turbine.inputs.bypass_ratio = 0.0
+        low_pressure_turbine.inputs.fan = Data()
+        low_pressure_turbine.inputs.fan.work_done = 0.0
+
         
         #flow through the low pressure turbine
         low_pressure_turbine(conditions)
@@ -224,6 +231,7 @@ class Turbojet_Super(Propulsor):
     
     def size(self,state):  
         
+        print 'eu entro sequer aqui'
         #Unpack components
         conditions = state.conditions      
         ram                       = self.ram
