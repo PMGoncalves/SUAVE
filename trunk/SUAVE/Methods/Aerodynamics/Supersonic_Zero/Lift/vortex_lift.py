@@ -46,7 +46,7 @@ def vortex_lift(state,settings,geometry):
     AoA        = state.conditions.aerodynamics.angle_of_attack
     wings_lift = state.conditions.aerodynamics.lift_coefficient
     vortex_cl  = np.array([[0.0]] * len(Mc))
-
+    
     for wing in geometry.wings:
 
         if wing.vortex_lift is True:

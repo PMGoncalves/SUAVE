@@ -172,6 +172,19 @@ class US_Standard_1976(Atmospheric):
         
         return atmo_data
 
+    def useful(self,alt_end) :
+        h = np.linspace(-1.,alt_end,200) * Units.km
+        delta_isa = 0.
+        atmosphere = US_Standard_1976()
+    
+        data = atmosphere.compute_values(h,delta_isa)
+        p   = data.pressure
+        T   = data.temperature
+        rho = data.density
+        a   = data.speed_of_sound
+        mu = data.dynamic_viscosity
+
+        return h, rho, a
 
 # ----------------------------------------------------------------------
 #   Module Tests
@@ -182,7 +195,7 @@ if __name__ == '__main__':
     
     h = np.linspace(-1.,60.,200) * Units.km
     delta_isa = 0.
-    h = 5000.
+#    h = 5000.
     atmosphere = US_Standard_1976()
     
     data = atmosphere.compute_values(h,delta_isa)
@@ -192,5 +205,7 @@ if __name__ == '__main__':
     a   = data.speed_of_sound
     mu = data.dynamic_viscosity
     
+    
     print data
+    
     

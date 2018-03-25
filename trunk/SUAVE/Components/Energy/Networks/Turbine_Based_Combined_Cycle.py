@@ -232,8 +232,6 @@ class Turbine_Based_Combined_Cycle(Propulsor):
         results_sum.mdot_core           = mdot_c_sum
         results_sum.tsfc                = TSFC_sum
         results_sum.f                   = f_sum
-
-        print F_sum
         
         return results_sum
         #return scramjet_results
