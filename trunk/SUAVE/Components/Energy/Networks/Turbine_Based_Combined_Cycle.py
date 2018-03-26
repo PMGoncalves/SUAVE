@@ -220,7 +220,8 @@ class Turbine_Based_Combined_Cycle(Propulsor):
 #        mdot_c_sum[rj_mode] = ramjet_results.mdot_core[rj_mode]
 #        mdot_c_sum[sj_mode] = scramjet_results.mdot_core[sj_mode]
 
-
+        thrust.thermo_anderson(conditions)
+        
         # Final export
         results_sum                     = Data()
         results_sum.thrust_force_vector = F_sum
@@ -232,6 +233,9 @@ class Turbine_Based_Combined_Cycle(Propulsor):
         results_sum.mdot_core           = mdot_c_sum
         results_sum.tsfc                = TSFC_sum
         results_sum.f                   = f_sum
+        
+        #-- debug heat flux
+        results_sum.heat_anderson = thrust.outputs.heat_flux_and
         
         return results_sum
         #return scramjet_results

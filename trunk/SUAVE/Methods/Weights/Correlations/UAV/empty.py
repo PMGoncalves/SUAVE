@@ -55,4 +55,6 @@ def empty(vehicle):
     weight = Data()
     weight.empty = Waf
     
+    print weight.empty
+    
     return weight
