@@ -102,6 +102,17 @@ class Thrust(Energy_Component):
         
         q_and  = (1.83e-8*(rho/Rle)**0.5*Vo**3.) #W/m2
         
+        q_sut_gra = 1.7415e-8*(rho/Rle)**0.5*Vo**3. 
+        
+        # Tauber Sutton updated
+        C = 3.416e-4
+        
+        # Reradiated
+        emi = 1.0
+        sig = 5.670370e-8 
+        a   = 1.072*1e6*Vo**-1.848*rho**-0.325
+        
+        
         self.outputs.heat_flux_and = q_and
                 
         return

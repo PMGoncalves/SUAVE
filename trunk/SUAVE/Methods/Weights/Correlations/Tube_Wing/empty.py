@@ -189,6 +189,7 @@ def empty(vehicle):
     # Calculate the equipment empty weight of the aircraft
     wt_empty           = (wt_wing + wt_fuselage + wt_landing_gear + wt_propulsion + output_2.wt_systems + \
                           wt_tail_horizontal + output_3.wt_tail_vertical + output_3.wt_rudder) 
+    
     vehicle.fuselages['fuselage'].mass_properties.mass = wt_fuselage
 
 

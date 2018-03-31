@@ -118,12 +118,12 @@ class Turbine_Based_Combined_Cycle(Propulsor):
         # creating switch for operation seletion
         
         Mo = conditions.freestream.mach_number
-        M_transition = 2.5
-        M_transition2 = 5.0
+        M_transition = 1.8
+        M_transition2 = 4.5
         
         tj_mode = Mo < M_transition
-        rj_mode = np.logical_and(Mo >= M_transition, Mo <= M_transition2)
-        sj_mode = Mo > M_transition2
+        rj_mode = np.logical_and(Mo >= M_transition, Mo < M_transition2)
+        sj_mode = Mo >= M_transition2
         
         # Build turbojet 
                 

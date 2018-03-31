@@ -110,8 +110,8 @@ def tbcc_sizing(tbcc,mach_number = None, altitude = None, delta_isa = 0, conditi
     
     turbojet_sizing(turbojet,mach_number,altitude)  
     
-    print 'deu bem'
-    print turbojet.thrust.mass_flow_rate_design
+#    print 'deu bem'
+#    print turbojet.thrust.mass_flow_rate_design
     
     ramjet =  SUAVE.Components.Energy.Networks.Ramjet()
     ramjet.number_of_engines = number_of_engines
@@ -128,6 +128,6 @@ def tbcc_sizing(tbcc,mach_number = None, altitude = None, delta_isa = 0, conditi
     
     ramjet_sizing(ramjet,mach_number,altitude)    
     
-    print 'deu bem 2'
-    print ramjet.thrust.mass_flow_rate_design
+#    print 'deu bem 2'
+#    print ramjet.thrust.mass_flow_rate_design
     return
