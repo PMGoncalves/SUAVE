@@ -415,5 +415,170 @@ class Thrust(Energy_Component):
         
         return
     
+    
+    def compute_rocket(self,conditions):
+        """Computes thrust and other properties as below.
+
+        Assumptions:
+        Perfect gas
+
+        Source:
+        https://web.stanford.edu/~cantwell/AA283_Course_Material/AA283_Course_Notes/
+
+        Inputs:
+        conditions.freestream.
+          isentropic_expansion_factor        [-] (gamma)
+          specific_heat_at_constant_pressure [J/(kg K)]
+          velocity                           [m/s]
+          speed_of_sound                     [m/s]
+          mach_number                        [-]
+          pressure                           [Pa]
+          gravity                            [m/s^2]
+        conditions.throttle                  [-] (.1 is 10%)
+        self.inputs.
+          fuel_to_air_ratio                  [-]
+          total_temperature_reference        [K]
+          total_pressure_reference           [Pa]
+          core_nozzle.
+            velocity                         [m/s]
+            static_pressure                  [Pa]
+            area_ratio                       [-]
+          fan_nozzle.
+            velocity                         [m/s]
+            static_pressure                  [Pa]
+            area_ratio                       [-]
+          number_of_engines                  [-]
+          bypass_ratio                       [-]
+          flow_through_core                  [-] percentage of total flow (.1 is 10%)
+          flow_through_fan                   [-] percentage of total flow (.1 is 10%)
+
+        Outputs:
+        self.outputs.
+          thrust                             [N]
+          thrust_specific_fuel_consumption   [N/N-s]
+          non_dimensional_thrust             [-]
+          core_mass_flow_rate                [kg/s]
+          fuel_flow_rate                     [kg/s]
+          power                              [W]
+
+        Properties Used:
+        self.
+          reference_temperature              [K]
+          reference_pressure                 [Pa]
+          compressor_nondimensional_massflow [-]
+        """           
+        #unpack the values
+        
+        #unpacking from conditions
+        Po                   = conditions.freestream.pressure  
+        g                    = conditions.freestream.gravity
+        u0                   = conditions.freestream.velocity
+        throttle             = conditions.propulsion.throttle    
+
+        
+        #unpacking from inputs
+        Tt                   = self.inputs.stagnation_temperature
+        Pt                   = self.inputs.stagnation_pressure
+        gamma                = self.inputs.isentropic_expansion_factor
+        Rm                   = self.inputs.specific_gas_constant
+        core_nozzle          = self.inputs.core_nozzle
+        OF                   = self.inputs.oxidizer_fuel_ratio
+        no_eng               = self.inputs.number_of_engines     
+                 
+        #unpack from self
+        mdot_design        = self.mass_flow_rate_design
+        
+
+        ##--------Ideal rocket theory---------------------------------
+        P_out       = core_nozzle.static_pressure
+        u_out       = core_nozzle.velocity
+        exp_ratio   = core_nozzle.expansion_ratio
+        
+        # Initialize arrays
+        Isp         = 1.0 * Po/Po
+
+        
+        # CF
+        a = (2*gamma**2)/(gamma-1)
+        b = (2/(gamma+1))**((gamma+1)/(gamma-1))
+        c = (1 - (P_out/Pt)**((gamma-1)/gamma))
+        d = ((P_out - Po)/(Pt))*exp_ratio                
+        CF = np.sqrt(a*b*c)+d
+        
+        print 'P out PO Pt Exp', np.shape(P_out), np.shape(Po), np.shape(Pt), np.shape(exp_ratio)
+
+        # CD
+        a = 2/(gamma + 1)
+        b = (gamma+1)/(2*(gamma-1))
+        c = np.sqrt((gamma)/(Rm*Tt))
+        CD = (a**b)*c
+        
+        print 'CF', np.shape(CF)
+        print 'CD', np.shape(CD)
+
+             
+        # Calculate specific impulse and specific thrust
+        
+        Isp = CF/(CD*g)
+        Fsp = Isp*g
+        
+        print 'Fsp', np.shape(Fsp)
+        #computing the dimensional thrust
+        FD2              = mdot_design*no_eng*throttle*Fsp
+     
+        
+        # --Oxidizer and fuel
+        
+        # oxidizer flow rate
+        mdot_ox          = OF/(1+OF)*mdot_design*throttle
+        
+        # fuel flow rate
+        mdot_fuel        = 1/(1+OF)*mdot_design*throttle
+                
+        #computing the power 
+        power            = FD2*u0
+        
+        #pack outputs
+        self.outputs.thrust                            = FD2 
+        self.outputs.specific_thrust                   = Fsp
+        self.outputs.specific_impulse                  = Isp
+        self.outputs.core_mass_flow_rate               = mdot_design*throttle
+        self.outputs.fuel_flow_rate                    = mdot_fuel + mdot_ox
+        self.outputs.oxidizer_flow_rate                = mdot_ox    
+        self.outputs.power                             = power  
+        
+        print '++++++++++++++++++++++++++++++++', np.shape(FD2)
+
+    def size_rocket(self,conditions):
+        """Sizes the core flow for the design condition.
+
+        Assumptions:
+
+        Source:
+
+        Inputs:
+
+        """             
+        #unpack inputs
+        throttle             = 1.0
+        
+        #unpack from self
+        design_thrust               = self.total_design      
+        no_eng                      = self.inputs.number_of_engines
+        
+        #compute nondimensional thrust
+        self.compute_rocket(conditions)
+        
+        #unpack results 
+        Fsp                         = self.outputs.specific_thrust
+
+        print 'fsp aqui', Fsp       
+        #compute dimensional mass flow rates
+        mdot_core                   = design_thrust/(Fsp*no_eng*throttle)  
+    
+        print 'mdot_core', mdot_core
+        #pack outputs
+        self.mass_flow_rate_design               = mdot_core
+        
     __call__ = compute         
 
