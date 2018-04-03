@@ -130,6 +130,7 @@ class Rocket(Propulsor):
 
         #compute the thrust
         thrust.compute_rocket(conditions)
+        thrust.thermo_anderson(conditions)
         
         #getting the network outputs from the thrust outputs
         F            = thrust.outputs.thrust*[1,0,0]
@@ -143,6 +144,16 @@ class Rocket(Propulsor):
         results = Data()
         results.thrust_force_vector = F
         results.vehicle_mass_rate   = mdot
+        
+        #-- new results
+        results.fsp                 = thrust.outputs.non_dimensional_thrust
+        results.mdot_core           = thrust.outputs.specific_impulse
+        results.tsfc                = thrust.outputs.thrust_specific_fuel_consumption
+        results.f                   = 1./combustor.outputs.oxidizer_fuel_ratio
+        results.specific_impulse     = thrust.outputs.specific_impulse
+
+        #-- debug heat flux
+        results.heat_anderson = thrust.outputs.heat_flux_and
         
         return results
     

@@ -473,8 +473,9 @@ class Thrust(Energy_Component):
         Po                   = conditions.freestream.pressure  
         g                    = conditions.freestream.gravity
         u0                   = conditions.freestream.velocity
-        throttle             = conditions.propulsion.throttle    
-
+        throttle             = conditions.propulsion.throttle   
+        a0                   = conditions.freestream.speed_of_sound
+        g                    = conditions.freestream.gravity
         
         #unpacking from inputs
         Tt                   = self.inputs.stagnation_temperature
@@ -505,24 +506,19 @@ class Thrust(Energy_Component):
         d = ((P_out - Po)/(Pt))*exp_ratio                
         CF = np.sqrt(a*b*c)+d
         
-        print 'P out PO Pt Exp', np.shape(P_out), np.shape(Po), np.shape(Pt), np.shape(exp_ratio)
-
         # CD
         a = 2/(gamma + 1)
         b = (gamma+1)/(2*(gamma-1))
         c = np.sqrt((gamma)/(Rm*Tt))
         CD = (a**b)*c
         
-        print 'CF', np.shape(CF)
-        print 'CD', np.shape(CD)
 
              
         # Calculate specific impulse and specific thrust
         
         Isp = CF/(CD*g)
-        Fsp = Isp*g
+        Fsp = Isp*g/a0
         
-        print 'Fsp', np.shape(Fsp)
         #computing the dimensional thrust
         FD2              = mdot_design*no_eng*throttle*Fsp
      
@@ -537,17 +533,17 @@ class Thrust(Energy_Component):
                 
         #computing the power 
         power            = FD2*u0
+        TSFC             = (mdot_fuel + mdot_ox)/FD2
         
-        #pack outputs
+        
         self.outputs.thrust                            = FD2 
-        self.outputs.specific_thrust                   = Fsp
-        self.outputs.specific_impulse                  = Isp
+        self.outputs.thrust_specific_fuel_consumption  = TSFC
+        self.outputs.non_dimensional_thrust            = Fsp 
         self.outputs.core_mass_flow_rate               = mdot_design*throttle
-        self.outputs.fuel_flow_rate                    = mdot_fuel + mdot_ox
-        self.outputs.oxidizer_flow_rate                = mdot_ox    
+        self.outputs.fuel_flow_rate                    = mdot_fuel + mdot_ox 
         self.outputs.power                             = power  
-        
-        print '++++++++++++++++++++++++++++++++', np.shape(FD2)
+        self.outputs.specific_impulse                  = Isp
+              
 
     def size_rocket(self,conditions):
         """Sizes the core flow for the design condition.
@@ -561,6 +557,7 @@ class Thrust(Energy_Component):
         """             
         #unpack inputs
         throttle             = 1.0
+        a0                   = conditions.freestream.speed_of_sound
         
         #unpack from self
         design_thrust               = self.total_design      
@@ -570,7 +567,7 @@ class Thrust(Energy_Component):
         self.compute_rocket(conditions)
         
         #unpack results 
-        Fsp                         = self.outputs.specific_thrust
+        Fsp                         = self.outputs.non_dimensional_thrust * a0
 
         print 'fsp aqui', Fsp       
         #compute dimensional mass flow rates

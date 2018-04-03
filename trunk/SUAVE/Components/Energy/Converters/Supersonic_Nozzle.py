@@ -482,7 +482,6 @@ class Supersonic_Nozzle(Energy_Component):
         func = lambda P_out : exp_ratio - (  a / ( np.sqrt(b * (P_out/Pt_in)**(2/gamma) * (1-(P_out/Pt_in)**((gamma-1)/gamma)))))
         P_out[:,0] = fsolve(func,Po[:,0],factor = 0.01)
 
-        print 'POUT SIZE', np.shape(P_out)
         # in case pressures go too low
         if np.any(P_out<0.4*Po):
             warn('P_out goes too low',RuntimeWarning)

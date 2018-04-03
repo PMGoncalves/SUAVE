@@ -400,7 +400,7 @@ class Combustor(Energy_Component):
         Pt_comb  = self.stagnation_pressure
         OF       = self.oxidizer_fuel_ratio
         
-        OF       = 6.0
+        OF       = np.ones_like(To)*6.0
         # method to compute combustor properties
 
         # Initialize arrays
