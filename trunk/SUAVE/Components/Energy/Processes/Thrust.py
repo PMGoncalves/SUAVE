@@ -73,7 +73,8 @@ class Thrust(Energy_Component):
         self.outputs.power                            = 0.0
         self.design_thrust                            = 0.0
         self.mass_flow_rate_design                    = 0.0
-       
+        self.stream_thrust                            = False
+    
         
         #Silly stuff
         self.outputs.heat_flux_and                    = 0.0
@@ -315,18 +316,40 @@ class Thrust(Energy_Component):
         mdhc                 = self.compressor_nondimensional_massflow
 
         
+        stream_thrust        = self.stream_thrust    
+        if np.any(f > 0.025):
+            stream_thrust = True
+            
+        if stream_thrust :
+            ##-------Stream thrust method ---------------------------        
+            R                       = conditions.freestream.gas_specific_constant
+            T0                      = conditions.freestream.temperature
+            core_exit_temperature   = self.inputs.core_nozzle.temperature
+            
+            Sa0     = u0*(1+R*T0/u0**2)
+            Sa_exit = core_exit_velocity*(1+R*core_exit_temperature/core_exit_velocity**2)
     
-        ##--------Cantwell method---------------------------------
-        
+            Fsp      = ((1+f)*Sa_exit - Sa0 - R*T0/u0*(core_area_ratio-1))/a0
 
-        # computing the non dimensional thrust
-        core_thrust_nondimensional  = flow_through_core*(gamma*M0*M0*(core_nozzle.velocity/u0-1.) + core_area_ratio*(core_nozzle.static_pressure/p0-1.))
-        fan_thrust_nondimensional   = flow_through_fan*(gamma*M0*M0*(fan_nozzle.velocity/u0-1.) + fan_area_ratio*(fan_nozzle.static_pressure/p0-1.))
-        
-        Thrust_nd                   = core_thrust_nondimensional + fan_thrust_nondimensional
+         
+        else:     
+            ##-------Cantwell method---------------------------------
+             
+            # computing the non dimensional thrust
+            core_thrust_nondimensional  = flow_through_core*(gamma*M0*M0*(core_nozzle.velocity/u0-1.) + core_area_ratio*(core_nozzle.static_pressure/p0-1.))
+            fan_thrust_nondimensional   = flow_through_fan*(gamma*M0*M0*(fan_nozzle.velocity/u0-1.) + fan_area_ratio*(fan_nozzle.static_pressure/p0-1.))
+
+            Thrust_nd                   = core_thrust_nondimensional + fan_thrust_nondimensional
       
-     
-        Fsp              = 1./(gamma*M0)*Thrust_nd
+            Fsp              = 1./(gamma*M0)*Thrust_nd
+            
+#        # computing the non dimensional thrust
+#        core_thrust_nondimensional  = flow_through_core*(gamma*M0*M0*(core_nozzle.velocity/u0-1.) + core_area_ratio*(core_nozzle.static_pressure/p0-1.))
+#        fan_thrust_nondimensional   = flow_through_fan*(gamma*M0*M0*(fan_nozzle.velocity/u0-1.) + fan_area_ratio*(fan_nozzle.static_pressure/p0-1.))
+#        
+#        Thrust_nd                   = core_thrust_nondimensional + fan_thrust_nondimensional
+#      
+#        Fsp              = 1./(gamma*M0)*Thrust_nd
 
         # computing the specific impulse
         Isp              = Fsp*a0*(1.+bypass_ratio)/(f*g)
