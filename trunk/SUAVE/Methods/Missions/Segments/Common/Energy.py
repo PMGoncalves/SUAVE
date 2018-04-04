@@ -90,4 +90,4 @@ def update_thrust(segment,state):
     conditions.propulsion.isp                  = results.specific_impulse
     
     conditions.propulsion.heat_flux_and        = results.heat_anderson
-    
+    conditions.propulsion.t_rad                = results.t_rad

@@ -74,7 +74,6 @@ class Thrust(Energy_Component):
         self.design_thrust                            = 0.0
         self.mass_flow_rate_design                    = 0.0
         self.stream_thrust                            = False
-    
         
         #Silly stuff
         self.outputs.heat_flux_and                    = 0.0
@@ -99,24 +98,34 @@ class Thrust(Energy_Component):
         
         Vo = conditions.freestream.velocity
         rho = conditions.freestream.density
-        Rle = 1
+        To  = conditions.freestream.temperature
+        Rle = .1
         
-        q_and  = (1.83e-8*(rho/Rle)**0.5*Vo**3.) #W/m2
-        
-        q_sut_gra = 1.7415e-8*(rho/Rle)**0.5*Vo**3. 
+        q_sut_gra =((Vo/1000.)**3.)*1.7415*(rho/Rle)**0.5 #W/cm2
         
         # Tauber Sutton updated
         C = 3.416e-4
         
         # Reradiated
-        emi = 1.0
+        emi = 0.85
         sig = 5.670370e-8 
-        a   = 1.072*1e6*Vo**-1.848*rho**-0.325
+        
+        q_sut_gra = q_sut_gra * 1e4
+        
+        T_rad = ((q_sut_gra/(emi*sig)) + To**4.)**(1./4.)
+        
+        q_sut_gra = q_sut_gra *1e-4
+
+        #---------------------------------------------------------
         
         
-        self.outputs.heat_flux_and = q_and
-                
-        return
+        self.outputs.heat_flux_and = q_sut_gra
+        self.outputs.t_rad         = T_rad
+        
+        
+#        #---------------------------------------------------------
+#                
+#        return
 #        from SUAVE.Methods.Propulsion.oblique_shock import theta_beta_mach
 #        from SUAVE.Attributes.Gases import Air
 #        # unpacking from conditions
@@ -126,7 +135,7 @@ class Thrust(Energy_Component):
 #        Vo                   = conditions.freestream.velocity
 #        To                   = conditions.freestream.temperature
 #        a0                   = conditions.freestream.speed_of_sound
-#        M                 = conditions.freestream.mach_number
+#        M                    = conditions.freestream.mach_number
 #        Po                   = conditions.freestream.pressure  
 #        g                    = conditions.freestream.gravity
 #        a                    = conditions.freestream.speed_of_sound
@@ -135,7 +144,7 @@ class Thrust(Energy_Component):
 #        Tto                   = conditions.freestream.stagnation_temperature
 #        Pto                  = conditions.freestream.stagnation_pressure
 #        gas = Air()
-#
+##
 #        Pr = 0.715
 #        Tto = conditions.freestream.stagnation_temperature   
 #        Pto = conditions.freestream.stagnation_pressure
@@ -151,11 +160,11 @@ class Thrust(Energy_Component):
 #        
 #        #---- Constants
 #        sig     = 5.67e-8   # Steffan-Boltzman constant
-#    
-#    
+##    
+##    
 #        #-- Stagnation
 #        rhoo    = Pto/(R*Tto)
-#        
+##        
 #        #-- Shock
 #        Tt1     = Tto
 #        Pt1     = Pto * ((((gamma+1.)*M*M)/(2.+(gamma-1.)*M*M))**(gamma/(gamma-1.)))*((gamma+1.)/(2.*gamma*M*M-(gamma-1.)))**(1./(gamma-1.))
@@ -164,10 +173,7 @@ class Thrust(Energy_Component):
 #        
 #        #-- Walls
 #        haw     = Cp*To + Vo*Vo/2.       #adiabatic wall enthalpy
-#        duds    = (1/Rle)*np.sqrt(2*(Pt1-Po)/rho1)
-#    
-#    
-#    
+#        duds    = (1/Rle)*np.sqrt(2*(Pt1-Po)/rho1)  
 #        #------------------------
 #    
 #        def integrand(s, Tiso):
@@ -318,7 +324,7 @@ class Thrust(Energy_Component):
         
         stream_thrust        = self.stream_thrust    
         if np.any(f > 0.025):
-            stream_thrust = True
+            stream_thrust = False
             
         if stream_thrust :
             ##-------Stream thrust method ---------------------------        
@@ -431,7 +437,7 @@ class Thrust(Energy_Component):
         # compute dimensional mass flow rates
         mdot_core                   = design_thrust/(Fsp*a0*(1.+bypass_ratio)*no_eng*throttle)  
         mdhc                        = mdot_core/ (np.sqrt(Tref/total_temperature_reference)*(total_pressure_reference/Pref))
-    
+        print 'Verificar stream thrust'
         # pack outputs
         self.mass_flow_rate_design               = mdot_core
         self.compressor_nondimensional_massflow  = mdhc   
@@ -519,19 +525,19 @@ class Thrust(Energy_Component):
         exp_ratio   = core_nozzle.expansion_ratio
         
         # Initialize arrays
-        Isp         = 1.0 * Po/Po
+        Isp         = np.ones_like(Po)
 
         
         # CF
-        a = (2*gamma**2)/(gamma-1)
-        b = (2/(gamma+1))**((gamma+1)/(gamma-1))
-        c = (1 - (P_out/Pt)**((gamma-1)/gamma))
+        a = (2.*gamma**2.)/(gamma-1.)
+        b = (2./(gamma+1.))**((gamma+1.)/(gamma-1.))
+        c = (1. - (P_out/Pt)**((gamma-1.)/gamma))
         d = ((P_out - Po)/(Pt))*exp_ratio                
         CF = np.sqrt(a*b*c)+d
         
         # CD
-        a = 2/(gamma + 1)
-        b = (gamma+1)/(2*(gamma-1))
+        a = 2./(gamma + 1.)
+        b = (gamma+1.)/(2.*(gamma-1.))
         c = np.sqrt((gamma)/(Rm*Tt))
         CD = (a**b)*c
         
@@ -543,21 +549,23 @@ class Thrust(Energy_Component):
         Fsp = Isp*g/a0
         
         #computing the dimensional thrust
-        FD2              = mdot_design*no_eng*throttle*Fsp
+        FD2              = mdot_design*no_eng*throttle*Fsp*a0
+        
+        print 'throttle'
+        print throttle
      
         
         # --Oxidizer and fuel
         
         # oxidizer flow rate
-        mdot_ox          = OF/(1+OF)*mdot_design*throttle
+        mdot_ox          = OF/(1.+OF)*mdot_design*throttle
         
         # fuel flow rate
-        mdot_fuel        = 1/(1+OF)*mdot_design*throttle
+        mdot_fuel        = 1./(1.+OF)*mdot_design*throttle
                 
         #computing the power 
         power            = FD2*u0
         TSFC             = (mdot_fuel + mdot_ox)/FD2
-        
         
         self.outputs.thrust                            = FD2 
         self.outputs.thrust_specific_fuel_consumption  = TSFC
