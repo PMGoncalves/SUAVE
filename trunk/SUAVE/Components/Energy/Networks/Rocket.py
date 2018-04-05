@@ -154,7 +154,8 @@ class Rocket(Propulsor):
 
         #-- debug heat flux
         results.heat_anderson = thrust.outputs.heat_flux_and
-        
+        results.t_rad          = thrust.outputs.t_rad
+        results.heat_flux_fay     = thrust.outputs.heat_flux_fay
         return results
     
     def size(self,state):  

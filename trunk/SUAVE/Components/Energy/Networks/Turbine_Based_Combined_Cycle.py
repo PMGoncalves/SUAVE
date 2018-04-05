@@ -237,6 +237,7 @@ class Turbine_Based_Combined_Cycle(Propulsor):
         #-- debug heat flux
         results_sum.heat_anderson = thrust.outputs.heat_flux_and
         results_sum.t_rad          = thrust.outputs.t_rad
+        results_sum.heat_flux_fay     = thrust.outputs.heat_flux_fay
         
         return results_sum
         #return scramjet_results
