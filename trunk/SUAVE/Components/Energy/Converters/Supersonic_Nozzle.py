@@ -76,6 +76,7 @@ class Supersonic_Nozzle(Energy_Component):
         self.min_area_ratio                         = 1.35     
         self.specific_heat_at_constant_pressure     = 1510.
         self.isentropic_expansion_factor            = 1.238    
+        self.expansion_ratio                        = 1.
     
     
     def compute(self,conditions):
@@ -464,33 +465,43 @@ class Supersonic_Nozzle(Energy_Component):
 #        pid        = self.pressure_ratio
 #        etapold    = self.polytropic_efficiency
         
-
+        gamma = 1.20438044
+        Rm = 8134./13.60087
+        
         # initialize array
-        P_out = 1.0*Po/Po
+        P_out = np.ones_like(Po)
         # -- Calculating flow properties
         
         # Vandenkerckhove function
         a = gamma
-        b = ((1+gamma)/2)**((1+gamma)/(1-gamma))        
+        b = ((1.+gamma)/2.)**((1.+gamma)/(1.-gamma))        
         Gf = np.sqrt(a*b)
         
         # P_out calculation
         a = Gf
-        b = 2*gamma/(gamma-1)
+        b = 2.*gamma/(gamma-1.)
         
+#        print 'a', a
+#        print 'b', b
+#        print 'Pto', Pt_in*1e-5
+#        print 'gamma', gamma
+#        print 'ratio', exp_ratio
         
-        func = lambda P_out : exp_ratio - (  a / ( np.sqrt(b * (P_out/Pt_in)**(2/gamma) * (1-(P_out/Pt_in)**((gamma-1)/gamma)))))
-        P_out[:,0] = fsolve(func,Po[:,0],factor = 0.01)
+        func = lambda P_out : exp_ratio - (  a / ( np.sqrt(b * (P_out/Pt_in)**(2./gamma) * (1.-(P_out/Pt_in)**((gamma-1.)/gamma)))))
+        P_out = fsolve(func,0.1e5,factor = 0.001)
+        
+#        print P_out*1e-5
 
-        # in case pressures go too low
-        if np.any(P_out<0.4*Po):
-            warn('P_out goes too low',RuntimeWarning)
-            P_out[P_out<0.4*Po] = 0.4*Po[P_out<0.4*Po]
+#        # in case pressures go too low
+#        if np.any(P_out<0.4*Po):
+#            print 'P_OUT BEFORE', P_out
+#            P_out = 0.4*Po
+#            print 'P_OUT AFTER', P_out
 
         # Calculate other flow properties
         Pt_out = Pt_in #possibly add pressure ratio
         Tt_out = Tt_in #possibly add adiabatic efficiency
-        u_out  = np.sqrt((2/(gamma-1))*(Rm)*Tt_out * (1 - (P_out/Pt_out)**((gamma-1)/gamma)))
+        u_out  = np.sqrt((2./(gamma-1.))*(Rm)*Tt_out * (1. - (P_out/Pt_out)**((gamma-1.)/gamma)))
         
         T_out  = Tt_out - u_out*u_out/(2*Cp)       
         Mach   = u_out / np.sqrt(gamma*Rm*T_out)

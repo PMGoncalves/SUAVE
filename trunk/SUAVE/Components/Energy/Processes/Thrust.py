@@ -418,25 +418,29 @@ class Thrust(Energy_Component):
         d = ((P_out - Po)/(Pt))*exp_ratio                
         CF = np.sqrt(a*b*c)+d
         
+#        print 'CF', CF
+        
         # CD
         a = 2./(gamma + 1.)
         b = (gamma+1.)/(2.*(gamma-1.))
         c = np.sqrt((gamma)/(Rm*Tt))
         CD = (a**b)*c
         
-
+#        print 'CD', CD
              
         # Calculate specific impulse and specific thrust
         
         Isp = CF/(CD*g)
         Fsp = Isp*g/a0
         
+#        print 'ISP', Isp
+#        print 'Fsp', Fsp
+        
         #computing the dimensional thrust
         FD2              = mdot_design*no_eng*throttle*Fsp*a0
-        
-        print 'throttle'
-        print throttle
-     
+#        print 'throttle'
+#        print throttle
+
         
         # --Oxidizer and fuel
         

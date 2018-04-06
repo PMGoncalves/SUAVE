@@ -83,7 +83,7 @@ def rocket_sizing(rocket,mach_number = None, altitude = None, delta_isa = 0, con
     nozzle.inputs.stagnation_pressure                   = combustor.outputs.stagnation_pressure
     nozzle.inputs.isentropic_expansion_factor           = combustor.outputs.isentropic_expansion_factor
     nozzle.inputs.specific_gas_constant                 = combustor.outputs.specific_gas_constant 
-    nozzle.inputs.specific_heat_constant_pressure      = combustor.outputs.specific_heat_constant_pressure    
+    nozzle.inputs.specific_heat_constant_pressure       = combustor.outputs.specific_heat_constant_pressure    
 
     #flow through the core nozzle
     nozzle.compute_rocket(conditions)

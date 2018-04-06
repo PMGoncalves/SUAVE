@@ -405,20 +405,18 @@ class Combustor(Energy_Component):
 
         # Initialize arrays
         Tt_ad_flame  = 1.0 * To / To  # Adiabatic flame temperature
-        gamma        = 1.20438044 * To / To  # gas gamma
-        Mw           = 13.60087 * To / To  # gas molar weight
-        OF_opt       = 6 * To / To   # optimum OF
-        Tt_comb      = 3629.8 * To / To  # Adiabatic flame temperature
+#        gamma        = np.ones_like(To)*1.20438044  # gas gamma
+#        Mw           = np.ones_like(To)*13.60087  # gas molar weight
+#        OF_opt       = np.ones_like(To)*6  # optimum OF
+        Tt_comb      = np.ones_like(To)*3629.75  # Adiabatic flame temperature
         
-        Tt_ad_flame = 3330. #function
-        gamma       = 1.4   # function
-        Mw          = 13.3  # function
+        gamma       = 1.20438044   # function
+        Mw          = 13.60087  # function
         OF_opt      = 6.0   # function
         
 
         # Scaling factor: combustion temperature is always lower than adiabatic flame temperature
-        scale = .8
-        Tt_comb = scale * Tt_ad_flame
+        Tt_comb = scale * Tt_comb
         
         # pack outputs
         Rm  = 8134./Mw

@@ -37,6 +37,8 @@ def total_aircraft(state,settings,geometry):
     conditions    = state.conditions
     configuration = settings
 
+
+    Mc              = state.conditions.freestream.mach_number
     drag_coefficient_increment = configuration.drag_coefficient_increment
     trim_corrected_drag        = conditions.aerodynamics.drag_breakdown.trim_corrected_drag
     spoiler_drag               = conditions.aerodynamics.drag_breakdown.spoiler_drag 
@@ -45,6 +47,8 @@ def total_aircraft(state,settings,geometry):
     # Add drag_coefficient_increment
     aircraft_total_drag += trim_corrected_drag + drag_coefficient_increment + spoiler_drag
     conditions.aerodynamics.drag_breakdown.drag_coefficient_increment = drag_coefficient_increment
+
+    aircraft_total_drag[Mc > 5.698] = 0.006
 
     # Store to results
     conditions.aerodynamics.drag_breakdown.total = aircraft_total_drag

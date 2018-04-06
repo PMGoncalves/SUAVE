@@ -12,6 +12,7 @@ from ramjet_sizing import ramjet_sizing
 from scramjet_sizing import scramjet_sizing
 from dmr_sizing import dmr_sizing
 from tbcc_sizing import tbcc_sizing
+from trbcc_sizing import trbcc_sizing
 from fm_id import fm_id
 from fm_solver import fm_solver
 from rayleigh import rayleigh
